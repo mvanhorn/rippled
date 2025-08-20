@@ -6,6 +6,7 @@
 #include <xrpld/rpc/DeliveredAmount.h>
 #include <xrpld/rpc/GRPCHandlers.h>
 #include <xrpld/rpc/MPTokenIssuanceID.h>
+#include <xrpld/rpc/detail/SyntheticFields.h>
 #include <xrpld/rpc/detail/TransactionSign.h>
 
 #include <xrpl/core/HashRouter.h>
@@ -254,12 +255,8 @@ simulateTxn(RPC::JsonContext& context, std::shared_ptr<Transaction> transaction)
         else
         {
             jvResult[jss::meta] = result.metadata->getJson(JsonOptions::none);
-            RPC::insertDeliveredAmount(
+            RPC::insertAllSyntheticInJson(
                 jvResult[jss::meta], view, transaction->getSTransaction(), *result.metadata);
-            RPC::insertNFTSyntheticInJson(
-                jvResult, transaction->getSTransaction(), *result.metadata);
-            RPC::insertMPTokenIssuanceID(
-                jvResult[jss::meta], transaction->getSTransaction(), *result.metadata);
         }
     }
 

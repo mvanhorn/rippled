@@ -11,7 +11,7 @@ namespace xrpl {
 namespace RPC {
 
 /**
-   Adds common synthetic fields to transaction-related JSON responses
+   Adds common synthetic fields to transaction metadata JSON
 
    @{
  */
