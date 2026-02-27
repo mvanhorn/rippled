@@ -29,6 +29,7 @@
 #include <xrpld/rpc/DeliveredAmount.h>
 #include <xrpld/rpc/MPTokenIssuanceID.h>
 #include <xrpld/rpc/ServerHandler.h>
+#include <xrpld/telemetry/TracingInstrumentation.h>
 
 #include <xrpl/basics/UptimeClock.h>
 #include <xrpl/basics/mulDiv.h>
@@ -1224,6 +1225,10 @@ NetworkOPsImp::processTransaction(
     bool bLocal,
     FailHard failType)
 {
+    XRPL_TRACE_TX(registry_.getTelemetry(), "tx.process");
+    XRPL_TRACE_SET_ATTR("xrpl.tx.hash", to_string(transaction->getID()).c_str());
+    XRPL_TRACE_SET_ATTR("xrpl.tx.local", bLocal);
+
     auto ev = m_job_queue.makeLoadEvent(jtTXN_PROC, "ProcessTXN");
 
     // preProcessTransaction can change our pointer
@@ -1231,9 +1236,15 @@ NetworkOPsImp::processTransaction(
         return;
 
     if (bLocal)
+    {
+        XRPL_TRACE_SET_ATTR("xrpl.tx.path", "sync");
         doTransactionSync(transaction, bUnlimited, failType);
+    }
     else
+    {
+        XRPL_TRACE_SET_ATTR("xrpl.tx.path", "async");
         doTransactionAsync(transaction, bUnlimited, failType);
+    }
 }
 
 void
