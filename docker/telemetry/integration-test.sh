@@ -308,7 +308,7 @@ max_queue_size=2048
 trace_rpc=1
 trace_transactions=1
 trace_consensus=1
-trace_peer=0
+trace_peer=1
 trace_ledger=1
 
 [rpc_startup]
@@ -482,6 +482,7 @@ log ""
 log "--- Phase 3: Transaction Spans ---"
 check_span "tx.process"
 check_span "tx.receive"
+check_span "tx.apply"
 
 log ""
 log "--- Phase 4: Consensus Spans ---"
@@ -489,6 +490,17 @@ check_span "consensus.proposal.send"
 check_span "consensus.ledger_close"
 check_span "consensus.accept"
 check_span "consensus.validation.send"
+
+log ""
+log "--- Phase 5: Ledger Spans ---"
+check_span "ledger.build"
+check_span "ledger.validate"
+check_span "ledger.store"
+
+log ""
+log "--- Phase 5: Peer Spans (trace_peer=1) ---"
+check_span "peer.proposal.receive"
+check_span "peer.validation.receive"
 
 # ---------------------------------------------------------------------------
 # Step 10: Verify Prometheus spanmetrics

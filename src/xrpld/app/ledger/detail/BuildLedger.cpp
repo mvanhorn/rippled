@@ -4,6 +4,7 @@
 #include <xrpld/app/ledger/OpenLedger.h>
 #include <xrpld/app/main/Application.h>
 #include <xrpld/app/misc/CanonicalTXSet.h>
+#include <xrpld/telemetry/TracingInstrumentation.h>
 
 #include <xrpl/protocol/Feature.h>
 #include <xrpl/tx/apply.h>
@@ -27,6 +28,8 @@ buildLedgerImpl(
     beast::Journal j,
     ApplyTxs&& applyTxs)
 {
+    XRPL_TRACE_LEDGER(app.getTelemetry(), "ledger.build");
+
     auto built = std::make_shared<Ledger>(*parent, closeTime);
 
     if (built->isFlagLedger())
@@ -60,6 +63,7 @@ buildLedgerImpl(
         built->header().seq < XRP_LEDGER_EARLIEST_FEES || built->read(keylet::fees()),
         "xrpl::buildLedgerImpl : valid ledger fees");
     built->setAccepted(closeTime, closeResolution, closeTimeCorrect);
+    XRPL_TRACE_SET_ATTR("xrpl.ledger.seq", static_cast<int64_t>(built->header().seq));
 
     return built;
 }
@@ -83,6 +87,8 @@ applyTransactions(
     OpenView& view,
     beast::Journal j)
 {
+    XRPL_TRACE_TX(app.getTelemetry(), "tx.apply");
+
     bool certainRetry = true;
     std::size_t count = 0;
 
@@ -149,6 +155,8 @@ applyTransactions(
     // If there are any transactions left, we must have
     // tried them in at least one final pass
     XRPL_ASSERT(txns.empty() || !certainRetry, "xrpl::applyTransactions : retry transactions");
+    XRPL_TRACE_SET_ATTR("xrpl.ledger.tx_count", static_cast<int64_t>(count));
+    XRPL_TRACE_SET_ATTR("xrpl.ledger.tx_failed", static_cast<int64_t>(failed.size()));
     return count;
 }
 
