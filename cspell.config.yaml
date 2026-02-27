@@ -99,6 +99,7 @@ words:
   - doxyfile
   - dxrpl
   - endmacro
+  - EOCFG
   - exceptioned
   - Falco
   - finalizers
@@ -195,6 +196,8 @@ words:
   - permdex
   - perminute
   - permissioned
+  - pgrep
+  - pkill
   - pointee
   - populator
   - pratik
@@ -213,6 +216,7 @@ words:
   - Raphson
   - reparent
   - replayer
+  - reqps
   - rerere
   - retriable
   - RIPD
@@ -307,6 +311,10 @@ words:
   - xchain
   - ximinez
   - EXPECT_STREQ
+  - Gantt
+  - gantt
+  - otelc
+  - traceql
   - XMACRO
   - xrpkuwait
   - xrpl
@@ -315,8 +323,4 @@ words:
   - xxhash
   - xxhasher
   - xychart
-  - otelc
   - zpages
-  - traceql
-  - Gantt
-  - gantt

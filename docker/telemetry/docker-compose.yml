@@ -7,8 +7,8 @@
 #   - jaeger: all-in-one tracing backend with UI on port 16686.
 #   - tempo: Grafana Tempo tracing backend, queryable via Grafana Explore
 #     on port 3000. Recommended for production (S3/GCS storage, TraceQL).
-#   - grafana: dashboards on port 3000, pre-configured with Jaeger, Tempo
-#     datasources.
+#   - grafana: dashboards on port 3000, pre-configured with Jaeger, Tempo,
+#     and Prometheus datasources.
 #
 # Usage:
 #   docker compose -f docker/telemetry/docker-compose.yml up -d
@@ -27,6 +27,7 @@ services:
     ports:
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus metrics (spanmetrics)
       - "13133:13133" # Health check
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
@@ -57,6 +58,17 @@ services:
     networks:
       - rippled-telemetry
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - otel-collector
+    networks:
+      - rippled-telemetry
+
   grafana:
     image: grafana/grafana:latest
     environment:
@@ -66,9 +78,11 @@ services:
       - "3000:3000"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - jaeger
       - tempo
+      - prometheus
     networks:
       - rippled-telemetry
 
