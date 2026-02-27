@@ -14,6 +14,7 @@
 #include <xrpld/consensus/LedgerTiming.h>
 #include <xrpld/overlay/Overlay.h>
 #include <xrpld/overlay/predicates.h>
+#include <xrpld/telemetry/TracingInstrumentation.h>
 
 #include <xrpl/basics/random.h>
 #include <xrpl/beast/core/LexicalCast.h>
@@ -171,6 +172,9 @@ RCLConsensus::Adaptor::share(RCLCxTx const& tx)
 void
 RCLConsensus::Adaptor::propose(RCLCxPeerPos::Proposal const& proposal)
 {
+    XRPL_TRACE_CONSENSUS(app_.getTelemetry(), "consensus.proposal.send");
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.round", static_cast<int64_t>(proposal.proposeSeq()));
+
     JLOG(j_.trace()) << (proposal.isBowOut() ? "We bow out: " : "We propose: ")
                      << xrpl::to_string(proposal.prevLedger()) << " -> "
                      << xrpl::to_string(proposal.position());
@@ -273,6 +277,11 @@ RCLConsensus::Adaptor::onClose(
     NetClock::time_point const& closeTime,
     ConsensusMode mode) -> Result
 {
+    XRPL_TRACE_CONSENSUS(app_.getTelemetry(), "consensus.ledger_close");
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.consensus.ledger.seq", static_cast<int64_t>(ledger.ledger_->header().seq + 1));
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.mode", to_string(mode).c_str());
+
     bool const wrongLCL = mode == ConsensusMode::wrongLedger;
     bool const proposing = mode == ConsensusMode::proposing;
 
@@ -381,6 +390,11 @@ RCLConsensus::Adaptor::onAccept(
     Json::Value&& consensusJson,
     bool const validating)
 {
+    XRPL_TRACE_CONSENSUS(app_.getTelemetry(), "consensus.accept");
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.proposers", static_cast<int64_t>(result.proposers));
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.consensus.round_time_ms", static_cast<int64_t>(result.roundTime.read().count()));
+
     app_.getJobQueue().addJob(
         jtACCEPT, "AcceptLedger", [=, this, cj = std::move(consensusJson)]() mutable {
             // Note that no lock is held or acquired during this job.
@@ -734,6 +748,10 @@ RCLConsensus::Adaptor::buildLCL(
 void
 RCLConsensus::Adaptor::validate(RCLCxLedger const& ledger, RCLTxSet const& txns, bool proposing)
 {
+    XRPL_TRACE_CONSENSUS(app_.getTelemetry(), "consensus.validation.send");
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.ledger.seq", static_cast<int64_t>(ledger.seq()));
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.proposing", proposing);
+
     using namespace std::chrono_literals;
 
     auto validationTime = app_.timeKeeper().closeTime();
