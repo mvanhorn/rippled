@@ -2,11 +2,22 @@
 #
 # Pipelines:
 #   traces: OTLP receiver -> batch processor -> debug + Jaeger + Tempo + spanmetrics
-#   metrics: spanmetrics connector -> Prometheus exporter
+#   metrics: spanmetrics connector + StatsD receiver -> Prometheus exporter
 #
 # rippled sends traces via OTLP/HTTP to port 4318. The collector batches
 # them, forwards to both Jaeger and Tempo, and derives RED metrics via the
 # spanmetrics connector, which Prometheus scrapes on port 8889.
+#
+# rippled also sends beast::insight metrics via StatsD/UDP to port 8125.
+# These are ingested by the statsd receiver and merged into the same
+# Prometheus endpoint alongside span-derived metrics.
+#
+# TODO: The Resource Manager's "warn" and "drop" metrics use the non-standard
+# "|m" (meter) StatsD type in StatsDCollector.cpp:706. The OTel StatsD
+# receiver silently drops "|m" metrics since it only recognizes standard
+# types (|c, |g, |ms, |h, |s). To capture these two metrics, change "|m"
+# to "|c" in StatsDCollector.cpp — this is a breaking change for any
+# backend that relied on the custom "|m" type. Tracked as Phase 6 Task 6.1.
 
 receivers:
   otlp:
@@ -15,6 +26,20 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  statsd:
+    endpoint: "0.0.0.0:8125"
+    aggregation_interval: 15s
+    enable_metric_type: true
+    is_monotonic_counter: true
+    timer_histogram_mapping:
+      - statsd_type: "timing"
+        observer_type: "summary"
+        summary:
+          percentiles: [0, 50, 90, 95, 99, 100]
+      - statsd_type: "histogram"
+        observer_type: "summary"
+        summary:
+          percentiles: [0, 50, 90, 95, 99, 100]
 
 processors:
   batch:
@@ -59,5 +84,5 @@ service:
       processors: [batch]
       exporters: [debug, otlp/jaeger, otlp/tempo, spanmetrics]
     metrics:
-      receivers: [spanmetrics]
+      receivers: [spanmetrics, statsd]
       exporters: [prometheus]

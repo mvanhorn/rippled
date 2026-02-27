@@ -444,11 +444,69 @@ curl -s "$PROM/api/v1/query?query=traces_span_metrics_calls_total{span_name=~\"r
   | jq '.data.result[] | {command: .metric["xrpl.rpc.command"], count: .value[1]}'
 ```
 
+### StatsD Metrics (beast::insight)
+
+rippled's built-in `beast::insight` framework emits StatsD metrics over UDP to the OTel Collector
+on port 8125. These appear in Prometheus alongside spanmetrics.
+
+Requires `[insight]` config in `xrpld.cfg`:
+
+```ini
+[insight]
+server=statsd
+address=127.0.0.1:8125
+prefix=rippled
+```
+
+Verify StatsD metrics in Prometheus:
+
+```bash
+# Ledger age gauge
+curl -s "$PROM/api/v1/query?query=rippled_LedgerMaster_Validated_Ledger_Age" | jq '.data.result'
+
+# Peer counts
+curl -s "$PROM/api/v1/query?query=rippled_Peer_Finder_Active_Inbound_Peers" | jq '.data.result'
+
+# RPC request counter
+curl -s "$PROM/api/v1/query?query=rippled_rpc_requests" | jq '.data.result'
+
+# State accounting
+curl -s "$PROM/api/v1/query?query=rippled_State_Accounting_Full_duration" | jq '.data.result'
+
+# Overlay traffic
+curl -s "$PROM/api/v1/query?query=rippled_total_Bytes_In" | jq '.data.result'
+```
+
+Key StatsD metrics (prefix `rippled_`):
+
+| Metric                                | Type      | Source                                    |
+| ------------------------------------- | --------- | ----------------------------------------- |
+| `LedgerMaster_Validated_Ledger_Age`   | gauge     | LedgerMaster.h:373                        |
+| `LedgerMaster_Published_Ledger_Age`   | gauge     | LedgerMaster.h:374                        |
+| `State_Accounting_{Mode}_duration`    | gauge     | NetworkOPs.cpp:774                        |
+| `State_Accounting_{Mode}_transitions` | gauge     | NetworkOPs.cpp:780                        |
+| `Peer_Finder_Active_Inbound_Peers`    | gauge     | PeerfinderManager.cpp:214                 |
+| `Peer_Finder_Active_Outbound_Peers`   | gauge     | PeerfinderManager.cpp:215                 |
+| `Overlay_Peer_Disconnects`            | gauge     | OverlayImpl.h:557                         |
+| `job_count`                           | gauge     | JobQueue.cpp:26                           |
+| `rpc_requests`                        | counter   | ServerHandler.cpp:108                     |
+| `rpc_time`                            | histogram | ServerHandler.cpp:110                     |
+| `rpc_size`                            | histogram | ServerHandler.cpp:109                     |
+| `ios_latency`                         | histogram | Application.cpp:438                       |
+| `pathfind_fast`                       | histogram | PathRequests.h:23                         |
+| `pathfind_full`                       | histogram | PathRequests.h:24                         |
+| `ledger_fetches`                      | counter   | InboundLedgers.cpp:44                     |
+| `ledger_history_mismatch`             | counter   | LedgerHistory.cpp:16                      |
+| `warn`                                | counter   | Logic.h:33                                |
+| `drop`                                | counter   | Logic.h:34                                |
+| `{category}_Bytes_In/Out`             | gauge     | OverlayImpl.h:535 (57 traffic categories) |
+| `{category}_Messages_In/Out`          | gauge     | OverlayImpl.h:535 (57 traffic categories) |
+
 ### Grafana
 
 Open http://localhost:3000 (anonymous admin access enabled).
 
-Pre-configured dashboards:
+Pre-configured dashboards (span-derived):
 
 - **RPC Performance**: Request rates, latency percentiles by command, top commands, WebSocket rate
 - **Transaction Overview**: Transaction processing rates, apply duration, peer relay, failed tx rate
@@ -456,9 +514,16 @@ Pre-configured dashboards:
 - **Ledger Operations**: Build/validate/store rates and durations, TX apply metrics
 - **Peer Network**: Proposal/validation receive rates, trusted vs untrusted breakdown (requires `trace_peer=1`)
 
+Pre-configured dashboards (StatsD):
+
+- **Node Health (StatsD)**: Validated/published ledger age, operating mode, I/O latency, job queue
+- **Network Traffic (StatsD)**: Peer counts, disconnects, overlay traffic by category
+- **RPC & Pathfinding (StatsD)**: RPC request rate/time/size, pathfinding duration, resource warnings
+
 Pre-configured datasources:
 
 - **Jaeger**: Trace data at `http://jaeger:16686`
+- **Tempo**: Trace data at `http://tempo:3200` (via Grafana Explore)
 - **Prometheus**: Metrics at `http://prometheus:9090`
 
 ---
