@@ -723,10 +723,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00587" name="l00587"></a><span class="lineno">  587</span>    {</div>
 <div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacexrpl.html#ae81177530fb8f1dfc3a29218939c1f58">sterilize</a>(<a class="code hl_class" href="classxrpl_1_1STTx.html">STTx</a>{std::move(*obj)});</div>
 <div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>    }</div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>    <span class="keywordflow">catch</span> (<a class="code hl_classRef" href="http://en.cppreference.com/w/cpp/error/exception.html">std::exception</a> <span class="keyword">const</span>&amp;)</div>
+<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>    <span class="keywordflow">catch</span> (...)</div>
 <div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>    {</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>    }</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>    <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>    }</div>
 <div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>}</div>
 </div>
 <div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span> </div>
@@ -751,10 +751,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span>    {</div>
 <div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>        <span class="keywordflow">return</span> <a class="code hl_variableRef" href="http://en.cppreference.com/w/cpp/types/is_same.html">std::make_shared&lt;STTx const&gt;</a>(std::move(*obj));</div>
 <div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span>    }</div>
-<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>    <span class="keywordflow">catch</span> (<a class="code hl_classRef" href="http://en.cppreference.com/w/cpp/error/exception.html">std::exception</a> <span class="keyword">const</span>&amp;)</div>
+<div class="line"><a id="l00616" name="l00616"></a><span class="lineno">  616</span>    <span class="keywordflow">catch</span> (...)</div>
 <div class="line"><a id="l00617" name="l00617"></a><span class="lineno">  617</span>    {</div>
-<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>    }</div>
-<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>    <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00618" name="l00618"></a><span class="lineno">  618</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><a id="l00619" name="l00619"></a><span class="lineno">  619</span>    }</div>
 <div class="line"><a id="l00620" name="l00620"></a><span class="lineno">  620</span>}</div>
 </div>
 <div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span> </div>
@@ -902,7 +902,6 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aemplace_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/utility/optional/emplace.html">std::optional::emplace</a></div><div class="ttdeci">T emplace(T... args)</div></div>
 <div class="ttc" id="aempty_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/string/basic_string/empty.html">std::string::empty</a></div><div class="ttdeci">T empty(T... args)</div></div>
 <div class="ttc" id="aendl_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/io/manip/endl.html">std::endl</a></div><div class="ttdeci">T endl(T... args)</div></div>
-<div class="ttc" id="aexception_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/error/exception.html">std::exception</a></div></div>
 <div class="ttc" id="afile_name_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/utility/source_location/file_name.html">std::source_location::file_name</a></div><div class="ttdeci">T file_name(T... args)</div></div>
 <div class="ttc" id="ainteger_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/types/integer.html">std::uint32_t</a></div></div>
 <div class="ttc" id="ais_same_html"><div class="ttname"><a href="http://en.cppreference.com/w/cpp/types/is_same.html">std::is_same_v</a></div><div class="ttdeci">T is_same_v</div></div>
