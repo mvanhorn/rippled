@@ -295,7 +295,7 @@ var searchData=
   ['digraph_3c_20xrpl_3a_3atest_3a_3acsf_3a_3apeer_20_2a_20_3e_292',['Digraph&lt; xrpl::test::csf::Peer * &gt;',['../classxrpl_1_1test_1_1csf_1_1Digraph.html',1,'xrpl::test::csf']]],
   ['digraph_3c_20xrpl_3a_3atest_3a_3acsf_3a_3apeer_2c_20xrpl_3a_3atest_3a_3acsf_3a_3abasicnetwork_3a_3alink_5ftype_20_3e_293',['Digraph&lt; xrpl::test::csf::Peer, xrpl::test::csf::BasicNetwork::link_type &gt;',['../classxrpl_1_1test_1_1csf_1_1Digraph.html',1,'xrpl::test::csf']]],
   ['digraph_5ftest_294',['Digraph_test',['../classxrpl_1_1test_1_1Digraph__test.html',1,'xrpl::test']]],
-  ['dir_295',['dir',['../classxrpl_1_1BookTip.html#a66bdd6a53b0889acdbe69580405fdfe1',1,'xrpl::BookTip::dir()'],['../classxrpl_1_1Dir.html',1,'xrpl::Dir'],['../classxrpl_1_1Dir.html#a96cea1cfc83c7b82b8b5e9ebf40b4ec7',1,'xrpl::Dir::Dir()'],['../classxrpl_1_1Dir_1_1const__iterator.html#a9c037aa57ccb12f75092ea55062c933e',1,'xrpl::Dir::const_iterator::Dir']]],
+  ['dir_295',['dir',['../classxrpl_1_1Dir.html#a96cea1cfc83c7b82b8b5e9ebf40b4ec7',1,'xrpl::Dir::Dir()'],['../classxrpl_1_1Dir.html',1,'xrpl::Dir'],['../classxrpl_1_1Dir_1_1const__iterator.html#a9c037aa57ccb12f75092ea55062c933e',1,'xrpl::Dir::const_iterator::Dir'],['../classxrpl_1_1BookTip.html#a66bdd6a53b0889acdbe69580405fdfe1',1,'xrpl::BookTip::dir()']]],
   ['dir_5fnode_296',['DIR_NODE',['../namespacexrpl.html#aa040fac78e4975614b31771a1bc5f7ada5d46a758217bde4e7cb6ee02fafefd61',1,'xrpl']]],
   ['diradd_297',['dirAdd',['../classxrpl_1_1ApplyView.html#abf007723dfd0495dbcb16a206acf9a79',1,'xrpl::ApplyView']]],
   ['dirappend_298',['dirAppend',['../classxrpl_1_1ApplyView.html#aea108d9948c353c3acd675955e2ea2a8',1,'xrpl::ApplyView']]],
