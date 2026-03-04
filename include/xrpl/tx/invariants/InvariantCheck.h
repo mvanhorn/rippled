@@ -1,20 +1,23 @@
 #pragma once
 
-#include <xrpl/basics/Number.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/beast/utility/Journal.h>
-#include <xrpl/protocol/MPTIssue.h>
-#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/ledger/ReadView.h>
 #include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/TER.h>
+#include <xrpl/tx/invariants/AMMInvariant.h>
+#include <xrpl/tx/invariants/FreezeInvariant.h>
+#include <xrpl/tx/invariants/LoanInvariant.h>
+#include <xrpl/tx/invariants/MPTInvariant.h>
+#include <xrpl/tx/invariants/NFTInvariant.h>
+#include <xrpl/tx/invariants/PermissionedDEXInvariant.h>
+#include <xrpl/tx/invariants/PermissionedDomainInvariant.h>
+#include <xrpl/tx/invariants/VaultInvariant.h>
 
 #include <cstdint>
 #include <tuple>
-#include <unordered_set>
 
 namespace xrpl {
-
-class ReadView;
 
 #if GENERATING_DOCS
 /**
@@ -222,75 +225,6 @@ public:
 };
 
 /**
- * @brief Invariant: frozen trust line balance change is not allowed.
- *
- * We iterate all affected trust lines and ensure that they don't have
- * unexpected change of balance if they're frozen.
- */
-class TransfersNotFrozen
-{
-    struct BalanceChange
-    {
-        std::shared_ptr<SLE const> const line;
-        int const balanceChangeSign;
-    };
-
-    struct IssuerChanges
-    {
-        std::vector<BalanceChange> senders;
-        std::vector<BalanceChange> receivers;
-    };
-
-    using ByIssuer = std::map<Issue, IssuerChanges>;
-    ByIssuer balanceChanges_;
-
-    std::map<AccountID, std::shared_ptr<SLE const> const> possibleIssuers_;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-
-private:
-    bool
-    isValidEntry(std::shared_ptr<SLE const> const& before, std::shared_ptr<SLE const> const& after);
-
-    STAmount
-    calculateBalanceChange(
-        std::shared_ptr<SLE const> const& before,
-        std::shared_ptr<SLE const> const& after,
-        bool isDelete);
-
-    void
-    recordBalance(Issue const& issue, BalanceChange change);
-
-    void
-    recordBalanceChanges(std::shared_ptr<SLE const> const& after, STAmount const& balanceChange);
-
-    std::shared_ptr<SLE const>
-    findIssuer(AccountID const& issuerID, ReadView const& view);
-
-    bool
-    validateIssuerChanges(
-        std::shared_ptr<SLE const> const& issuer,
-        IssuerChanges const& changes,
-        STTx const& tx,
-        beast::Journal const& j,
-        bool enforce);
-
-    bool
-    validateFrozenState(
-        BalanceChange const& change,
-        bool high,
-        STTx const& tx,
-        beast::Journal const& j,
-        bool enforce,
-        bool globalFreeze);
-};
-
-/**
  * @brief Invariant: offers should be for non-negative amounts and must not
  *                   be XRP to XRP.
  *
@@ -346,63 +280,6 @@ public:
 };
 
 /**
- * @brief Invariant: Validates several invariants for NFToken pages.
- *
- * The following checks are made:
- *  - The page is correctly associated with the owner.
- *  - The page is correctly ordered between the next and previous links.
- *  - The page contains at least one and no more than 32 NFTokens.
- *  - The NFTokens on this page do not belong on a lower or higher page.
- *  - The NFTokens are correctly sorted on the page.
- *  - Each URI, if present, is not empty.
- */
-class ValidNFTokenPage
-{
-    bool badEntry_ = false;
-    bool badLink_ = false;
-    bool badSort_ = false;
-    bool badURI_ = false;
-    bool invalidSize_ = false;
-    bool deletedFinalPage_ = false;
-    bool deletedLink_ = false;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-/**
- * @brief Invariant: Validates counts of NFTokens after all transaction types.
- *
- * The following checks are made:
- *  - The number of minted or burned NFTokens can only be changed by
- *    NFTokenMint or NFTokenBurn transactions.
- *  - A successful NFTokenMint must increase the number of NFTokens.
- *  - A failed NFTokenMint must not change the number of minted NFTokens.
- *  - An NFTokenMint transaction cannot change the number of burned NFTokens.
- *  - A successful NFTokenBurn must increase the number of burned NFTokens.
- *  - A failed NFTokenBurn must not change the number of burned NFTokens.
- *  - An NFTokenBurn transaction cannot change the number of minted NFTokens.
- */
-class NFTokenCountTracking
-{
-    std::uint32_t beforeMintedTotal = 0;
-    std::uint32_t beforeBurnedTotal = 0;
-    std::uint32_t afterMintedTotal = 0;
-    std::uint32_t afterBurnedTotal = 0;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-/**
  * @brief Invariant: Token holder's trustline balance cannot be negative after
  * Clawback.
  *
@@ -414,54 +291,6 @@ class ValidClawback
 {
     std::uint32_t trustlinesChanged = 0;
     std::uint32_t mptokensChanged = 0;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-class ValidMPTIssuance
-{
-    std::uint32_t mptIssuancesCreated_ = 0;
-    std::uint32_t mptIssuancesDeleted_ = 0;
-
-    std::uint32_t mptokensCreated_ = 0;
-    std::uint32_t mptokensDeleted_ = 0;
-    // non-MPT transactions may attempt to create
-    // MPToken by an issuer
-    bool mptCreatedByIssuer_ = false;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-/**
- * @brief Invariants: Permissioned Domains must have some rules and
- * AcceptedCredentials must have length between 1 and 10 inclusive.
- *
- * Since only permissions constitute rules, an empty credentials list
- * means that there are no rules and the invariant is violated.
- *
- * Credentials must be sorted and no duplicates allowed
- *
- */
-class ValidPermissionedDomain
-{
-    struct SleStatus
-    {
-        std::size_t credentialsSize_{0};
-        bool isSorted_ = false;
-        bool isUnique_ = false;
-        bool isDelete_ = false;
-    };
-    std::vector<SleStatus> sleStatus_;
 
 public:
     void
@@ -491,60 +320,6 @@ public:
     finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
 };
 
-class ValidPermissionedDEX
-{
-    bool regularOffers_ = false;
-    bool badHybrids_ = false;
-    hash_set<uint256> domains_;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-class ValidAMM
-{
-    std::optional<AccountID> ammAccount_;
-    std::optional<STAmount> lptAMMBalanceAfter_;
-    std::optional<STAmount> lptAMMBalanceBefore_;
-    bool ammPoolChanged_;
-
-public:
-    enum class ZeroAllowed : bool { No = false, Yes = true };
-
-    ValidAMM() : ammPoolChanged_{false}
-    {
-    }
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-
-private:
-    bool
-    finalizeBid(bool enforce, beast::Journal const&) const;
-    bool
-    finalizeVote(bool enforce, beast::Journal const&) const;
-    bool
-    finalizeCreate(STTx const&, ReadView const&, bool enforce, beast::Journal const&) const;
-    bool
-    finalizeDelete(bool enforce, TER res, beast::Journal const&) const;
-    bool
-    finalizeDeposit(STTx const&, ReadView const&, bool enforce, beast::Journal const&) const;
-    // Includes clawback
-    bool
-    finalizeWithdraw(STTx const&, ReadView const&, bool enforce, beast::Journal const&) const;
-    bool
-    finalizeDEX(bool enforce, beast::Journal const&) const;
-    bool
-    generalInvariant(STTx const&, ReadView const&, ZeroAllowed zeroAllowed, beast::Journal const&)
-        const;
-};
-
 /**
  * @brief Invariants: Some fields are unmodifiable
  *
@@ -556,128 +331,6 @@ class NoModifiedUnmodifiableFields
 {
     // Pair is <before, after>.
     std::set<std::pair<SLE::const_pointer, SLE::const_pointer>> changedEntries_;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-/**
- * @brief Invariants: Loan brokers are internally consistent
- *
- * 1. If `LoanBroker.OwnerCount = 0` the `DirectoryNode` will have at most one
- *    node (the root), which will only hold entries for `RippleState` or
- * `MPToken` objects.
- *
- */
-class ValidLoanBroker
-{
-    // Not all of these elements will necessarily be populated. Remaining items
-    // will be looked up as needed.
-    struct BrokerInfo
-    {
-        SLE::const_pointer brokerBefore = nullptr;
-        // After is used for most of the checks, except
-        // those that check changed values.
-        SLE::const_pointer brokerAfter = nullptr;
-    };
-    // Collect all the LoanBrokers found directly or indirectly through
-    // pseudo-accounts. Key is the brokerID / index. It will be used to find the
-    // LoanBroker object if brokerBefore and brokerAfter are nullptr
-    std::map<uint256, BrokerInfo> brokers_;
-    // Collect all the modified trust lines. Their high and low accounts will be
-    // loaded to look for LoanBroker pseudo-accounts.
-    std::vector<SLE::const_pointer> lines_;
-    // Collect all the modified MPTokens. Their accounts will be loaded to look
-    // for LoanBroker pseudo-accounts.
-    std::vector<SLE::const_pointer> mpts_;
-
-    bool
-    goodZeroDirectory(ReadView const& view, SLE::const_ref dir, beast::Journal const& j) const;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-/**
- * @brief Invariants: Loans are internally consistent
- *
- * 1. If `Loan.PaymentRemaining = 0` then `Loan.PrincipalOutstanding = 0`
- *
- */
-class ValidLoan
-{
-    // Pair is <before, after>. After is used for most of the checks, except
-    // those that check changed values.
-    std::vector<std::pair<SLE::const_pointer, SLE::const_pointer>> loans_;
-
-public:
-    void
-    visitEntry(bool, std::shared_ptr<SLE const> const&, std::shared_ptr<SLE const> const&);
-
-    bool
-    finalize(STTx const&, TER const, XRPAmount const, ReadView const&, beast::Journal const&);
-};
-
-/*
- * @brief Invariants: Vault object and MPTokenIssuance for vault shares
- *
- * - vault deleted and vault created is empty
- * - vault created must be linked to pseudo-account for shares and assets
- * - vault must have MPTokenIssuance for shares
- * - vault without shares outstanding must have no shares
- * - loss unrealized does not exceed the difference between assets total and
- *   assets available
- * - assets available do not exceed assets total
- * - vault deposit increases assets and share issuance, and adds to:
- *   total assets, assets available, shares outstanding
- * - vault withdrawal and clawback reduce assets and share issuance, and
- *   subtracts from: total assets, assets available, shares outstanding
- * - vault set must not alter the vault assets or shares balance
- * - no vault transaction can change loss unrealized (it's updated by loan
- *   transactions)
- *
- */
-class ValidVault
-{
-    Number static constexpr zero{};
-
-    struct Vault final
-    {
-        uint256 key = beast::zero;
-        Asset asset = {};
-        AccountID pseudoId = {};
-        AccountID owner = {};
-        uint192 shareMPTID = beast::zero;
-        Number assetsTotal = 0;
-        Number assetsAvailable = 0;
-        Number assetsMaximum = 0;
-        Number lossUnrealized = 0;
-
-        Vault static make(SLE const&);
-    };
-
-    struct Shares final
-    {
-        MPTIssue share = {};
-        std::uint64_t sharesTotal = 0;
-        std::uint64_t sharesMaximum = 0;
-
-        Shares static make(SLE const&);
-    };
-
-    std::vector<Vault> afterVault_ = {};
-    std::vector<Shares> afterMPTs_ = {};
-    std::vector<Vault> beforeVault_ = {};
-    std::vector<Shares> beforeMPTs_ = {};
-    std::unordered_map<uint256, Number> deltas_ = {};
 
 public:
     void
