@@ -372,18 +372,19 @@ See the "Verification Queries" section below.
 
 All 12 production span names instrumented across Phases 2-4:
 
-| Span Name                   | Source File           | Phase | Key Attributes                                             | How to Trigger            |
-| --------------------------- | --------------------- | ----- | ---------------------------------------------------------- | ------------------------- |
-| `rpc.request`               | ServerHandler.cpp:271 | 2     | --                                                         | Any HTTP RPC call         |
-| `rpc.process`               | ServerHandler.cpp:573 | 2     | --                                                         | Any HTTP RPC call         |
-| `rpc.ws_message`            | ServerHandler.cpp:384 | 2     | --                                                         | WebSocket RPC message     |
-| `rpc.command.<name>`        | RPCHandler.cpp:161    | 2     | `xrpl.rpc.command`, `xrpl.rpc.version`, `xrpl.rpc.role`    | Any RPC command           |
-| `tx.process`                | NetworkOPs.cpp:1227   | 3     | `xrpl.tx.hash`, `xrpl.tx.local`, `xrpl.tx.path`            | Submit transaction        |
-| `tx.receive`                | PeerImp.cpp:1273      | 3     | `xrpl.peer.id`                                             | Peer relays transaction   |
-| `consensus.proposal.send`   | RCLConsensus.cpp:177  | 4     | `xrpl.consensus.round`                                     | Consensus proposing phase |
-| `consensus.ledger_close`    | RCLConsensus.cpp:282  | 4     | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`         | Ledger close event        |
-| `consensus.accept`          | RCLConsensus.cpp:395  | 4     | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms` | Ledger accepted           |
-| `consensus.validation.send` | RCLConsensus.cpp:753  | 4     | `xrpl.consensus.ledger.seq`, `xrpl.consensus.proposing`    | Validation sent           |
+| Span Name                   | Source File           | Phase | Key Attributes                                                                    | How to Trigger            |
+| --------------------------- | --------------------- | ----- | --------------------------------------------------------------------------------- | ------------------------- |
+| `rpc.request`               | ServerHandler.cpp:271 | 2     | --                                                                                | Any HTTP RPC call         |
+| `rpc.process`               | ServerHandler.cpp:573 | 2     | --                                                                                | Any HTTP RPC call         |
+| `rpc.ws_message`            | ServerHandler.cpp:384 | 2     | --                                                                                | WebSocket RPC message     |
+| `rpc.command.<name>`        | RPCHandler.cpp:161    | 2     | `xrpl.rpc.command`, `xrpl.rpc.version`, `xrpl.rpc.role`                           | Any RPC command           |
+| `tx.process`                | NetworkOPs.cpp:1227   | 3     | `xrpl.tx.hash`, `xrpl.tx.local`, `xrpl.tx.path`                                   | Submit transaction        |
+| `tx.receive`                | PeerImp.cpp:1273      | 3     | `xrpl.peer.id`                                                                    | Peer relays transaction   |
+| `consensus.proposal.send`   | RCLConsensus.cpp:177  | 4     | `xrpl.consensus.round`                                                            | Consensus proposing phase |
+| `consensus.ledger_close`    | RCLConsensus.cpp:282  | 4     | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`                                | Ledger close event        |
+| `consensus.accept`          | RCLConsensus.cpp:395  | 4     | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms`                        | Ledger accepted           |
+| `consensus.validation.send` | RCLConsensus.cpp:753  | 4     | `xrpl.consensus.ledger.seq`, `xrpl.consensus.proposing`                           | Validation sent           |
+| `consensus.accept.apply`    | RCLConsensus.cpp:453  | 4     | `xrpl.consensus.close_time`, `close_time_correct`, `close_resolution_ms`, `state` | Ledger apply + close time |
 
 ---
 
@@ -407,7 +408,8 @@ for op in "rpc.request" "rpc.process" \
           "rpc.command.server_info" "rpc.command.server_state" "rpc.command.ledger" \
           "tx.process" "tx.receive" \
           "consensus.proposal.send" "consensus.ledger_close" \
-          "consensus.accept" "consensus.validation.send"; do
+          "consensus.accept" "consensus.accept.apply" \
+          "consensus.validation.send"; do
   count=$(curl -s "$JAEGER/api/traces?service=rippled&operation=$op&limit=5&lookback=1h" \
     | jq '.data | length')
   printf "%-35s %s traces\n" "$op" "$count"

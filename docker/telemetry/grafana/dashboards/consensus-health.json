@@ -82,6 +82,49 @@
         },
         "overrides": []
       }
+    },
+    {
+      "title": "Ledger Apply Duration (doAccept)",
+      "description": "Time spent applying the consensus result to build a new ledger. Measured by the consensus.accept.apply span in doAccept().",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.accept.apply\"}[5m])))",
+          "legendFormat": "p95 apply duration"
+        },
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.accept.apply\"}[5m])))",
+          "legendFormat": "p50 apply duration"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Close Time Agreement",
+      "description": "Rate of close time agreement vs disagreement across consensus rounds. Based on xrpl.consensus.close_time_correct attribute (true = validators agreed, false = agreed to disagree per avCT_CONSENSUS_PCT).",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "sum(rate(traces_span_metrics_calls_total{span_name=\"consensus.accept.apply\"}[5m]))",
+          "legendFormat": "total rounds/sec"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
     }
   ],
   "schemaVersion": 39,

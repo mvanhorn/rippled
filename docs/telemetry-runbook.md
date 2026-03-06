@@ -78,12 +78,29 @@ All spans instrumented in rippled, grouped by subsystem:
 
 ### Consensus Spans (Phase 4)
 
-| Span Name                   | Source File          | Attributes                                                 | Description                  |
-| --------------------------- | -------------------- | ---------------------------------------------------------- | ---------------------------- |
-| `consensus.proposal.send`   | RCLConsensus.cpp:177 | `xrpl.consensus.round`                                     | Consensus proposal broadcast |
-| `consensus.ledger_close`    | RCLConsensus.cpp:282 | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`         | Ledger close event           |
-| `consensus.accept`          | RCLConsensus.cpp:395 | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms` | Ledger accepted by consensus |
-| `consensus.validation.send` | RCLConsensus.cpp:753 | `xrpl.consensus.ledger.seq`, `xrpl.consensus.proposing`    | Validation sent after accept |
+| Span Name                   | Source File          | Attributes                                                                                                                    | Description                                |
+| --------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `consensus.proposal.send`   | RCLConsensus.cpp:177 | `xrpl.consensus.round`                                                                                                        | Consensus proposal broadcast               |
+| `consensus.ledger_close`    | RCLConsensus.cpp:282 | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`                                                                            | Ledger close event                         |
+| `consensus.accept`          | RCLConsensus.cpp:395 | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms`                                                                    | Ledger accepted by consensus               |
+| `consensus.validation.send` | RCLConsensus.cpp:753 | `xrpl.consensus.ledger.seq`, `xrpl.consensus.proposing`                                                                       | Validation sent after accept               |
+| `consensus.accept.apply`    | RCLConsensus.cpp:453 | `xrpl.consensus.close_time`, `close_time_correct`, `close_resolution_ms`, `state`, `proposing`, `round_time_ms`, `ledger.seq` | Ledger application with close time details |
+
+#### Close Time Queries (Tempo TraceQL)
+
+```
+# Find rounds where validators disagreed on close time
+{name="consensus.accept.apply"} | xrpl.consensus.close_time_correct = false
+
+# Find consensus failures (moved_on)
+{name="consensus.accept.apply"} | xrpl.consensus.state = "moved_on"
+
+# Find slow ledger applications (>5s)
+{name="consensus.accept.apply"} | duration > 5s
+
+# Find specific ledger's consensus details
+{name="consensus.accept.apply"} | xrpl.consensus.ledger.seq = 92345678
+```
 
 ## Prometheus Metrics (Spanmetrics)
 
@@ -156,20 +173,23 @@ Three dashboards are pre-provisioned in `docker/telemetry/grafana/dashboards/`:
 | Consensus Proposals Sent Rate | timeseries | `rate(traces_span_metrics_calls_total{span_name="consensus.proposal.send"}[5m])`   | —           |
 | Ledger Close Duration         | timeseries | `histogram_quantile(0.95, ... {span_name="consensus.ledger_close"})`               | —           |
 | Validation Send Rate          | stat       | `rate(traces_span_metrics_calls_total{span_name="consensus.validation.send"}[5m])` | —           |
+| Ledger Apply Duration         | timeseries | `histogram_quantile(0.95 / 0.50, ... {span_name="consensus.accept.apply"})`        | —           |
+| Close Time Agreement          | timeseries | `rate(traces_span_metrics_calls_total{span_name="consensus.accept.apply"}[5m])`    | —           |
 
 ### Span → Metric → Dashboard Summary
 
-| Span Name                   | Prometheus Metric Filter                  | Grafana Dashboard                  |
-| --------------------------- | ----------------------------------------- | ---------------------------------- |
-| `rpc.request`               | `{span_name="rpc.request"}`               | — (available but not paneled)      |
-| `rpc.process`               | `{span_name="rpc.process"}`               | — (available but not paneled)      |
-| `rpc.command.*`             | `{span_name=~"rpc.command.*"}`            | RPC Performance (all 4 panels)     |
-| `tx.process`                | `{span_name="tx.process"}`                | Transaction Overview (3 panels)    |
-| `tx.receive`                | `{span_name="tx.receive"}`                | Transaction Overview (2 panels)    |
-| `consensus.accept`          | `{span_name="consensus.accept"}`          | Consensus Health (Round Duration)  |
-| `consensus.proposal.send`   | `{span_name="consensus.proposal.send"}`   | Consensus Health (Proposals Rate)  |
-| `consensus.ledger_close`    | `{span_name="consensus.ledger_close"}`    | Consensus Health (Close Duration)  |
-| `consensus.validation.send` | `{span_name="consensus.validation.send"}` | Consensus Health (Validation Rate) |
+| Span Name                   | Prometheus Metric Filter                  | Grafana Dashboard                             |
+| --------------------------- | ----------------------------------------- | --------------------------------------------- |
+| `rpc.request`               | `{span_name="rpc.request"}`               | — (available but not paneled)                 |
+| `rpc.process`               | `{span_name="rpc.process"}`               | — (available but not paneled)                 |
+| `rpc.command.*`             | `{span_name=~"rpc.command.*"}`            | RPC Performance (all 4 panels)                |
+| `tx.process`                | `{span_name="tx.process"}`                | Transaction Overview (3 panels)               |
+| `tx.receive`                | `{span_name="tx.receive"}`                | Transaction Overview (2 panels)               |
+| `consensus.accept`          | `{span_name="consensus.accept"}`          | Consensus Health (Round Duration)             |
+| `consensus.proposal.send`   | `{span_name="consensus.proposal.send"}`   | Consensus Health (Proposals Rate)             |
+| `consensus.ledger_close`    | `{span_name="consensus.ledger_close"}`    | Consensus Health (Close Duration)             |
+| `consensus.validation.send` | `{span_name="consensus.validation.send"}` | Consensus Health (Validation Rate)            |
+| `consensus.accept.apply`    | `{span_name="consensus.accept.apply"}`    | Consensus Health (Apply Duration, Close Time) |
 
 ## Troubleshooting
 
