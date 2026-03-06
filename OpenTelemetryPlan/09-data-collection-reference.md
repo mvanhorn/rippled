@@ -494,6 +494,38 @@ rippled_State_Accounting_Full_duration
 
 ---
 
+## 5a. Future: Log-Trace Correlation (Phase 8)
+
+> **Plan details**: [06-implementation-phases.md §6.8.1](./06-implementation-phases.md) — motivation, architecture, Mermaid diagrams
+> **Task breakdown**: [Phase8_taskList.md](./Phase8_taskList.md) — per-task implementation details
+
+Phase 8 injects OTel trace context into rippled's `Logs::format()` output, enabling log-trace correlation:
+
+```
+2024-01-15T10:30:45.123Z LedgerMaster:NFO trace_id=abc123def456... span_id=0123456789abcdef Validated ledger 42
+```
+
+- **`trace_id=<hex32>`** — Links to the distributed trace in Tempo/Jaeger
+- **`span_id=<hex16>`** — Identifies the specific span within the trace
+- **Only present** when the log is emitted within an active OTel span
+- **Ingested** via OTel Collector filelog receiver → Grafana Loki
+- **Correlated** via Grafana derived fields (Loki↔Tempo bidirectional linking)
+
+### LogQL Query Examples
+
+```promql
+# Find all logs for a specific trace
+{job="rippled"} |= "trace_id=abc123def456"
+
+# Error logs with trace context
+{job="rippled"} | regexp `(?P<severity>\w+):(?P<level>ERR|WRN)` | severity != ""
+
+# Logs from a specific partition with trace context
+{job="rippled"} |= "LedgerMaster" | regexp `trace_id=(?P<trace_id>\w+)` | trace_id != ""
+```
+
+---
+
 ## 6. Known Issues
 
 | Issue                                                              | Impact                                           | Status                                                               |
