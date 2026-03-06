@@ -271,6 +271,8 @@ The OTel Collector's SpanMetrics connector automatically generates RED (Rate, Er
 ## 2. StatsD Metrics (beast::insight)
 
 > **See also**: [02-design-decisions.md](./02-design-decisions.md) for the beast::insight coexistence design. [06-implementation-phases.md](./06-implementation-phases.md) for the Phase 6 metric inventory.
+>
+> **Migration planned**: [Phase7_taskList.md](./Phase7_taskList.md) replaces the StatsD UDP transport with native OTel Metrics SDK export via OTLP/HTTP. The `beast::insight::Collector` interface and all metric names are preserved — only the wire protocol changes. `[insight] server=statsd` remains as a fallback.
 
 These are system-level metrics emitted by rippled's `beast::insight` framework via StatsD UDP. They cover operational data that doesn't map to individual trace spans.
 
@@ -481,6 +483,12 @@ rate(rippled_total_Bytes_In[5m])
 # Operating mode (should be "Full" after startup)
 rippled_State_Accounting_Full_duration
 ```
+
+---
+
+## 5a. Future: Log-Trace Correlation (Phase 8)
+
+> **Planned**: [Phase8_taskList.md](./Phase8_taskList.md) adds `trace_id` and `span_id` to every JLOG log line emitted within an active OTel span. Combined with Grafana Loki ingestion, this enables one-click navigation between traces (Tempo) and logs (Loki). No changes to JLOG call sites — injection is transparent in `Logs::format()`.
 
 ---
 

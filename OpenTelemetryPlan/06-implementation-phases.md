@@ -342,7 +342,95 @@ The `StatsDMeterImpl` in `StatsDCollector.cpp:706` sends metrics with `|m` suffi
 - [ ] StatsD metrics visible in Prometheus (`curl localhost:9090/api/v1/query?query=rippled_LedgerMaster_Validated_Ledger_Age`)
 - [ ] All 3 new Grafana dashboards load without errors
 - [ ] Integration test verifies at least core StatsD metrics (ledger age, peer counts, RPC requests)
-- [ ] ~~Meter metrics (`warn`, `drop`) flow correctly after `|m` → `|c` fix~~ — DEFERRED (breaking change, tracked separately)
+- [ ] ~~Meter metrics (`warn`, `drop`) flow correctly after `|m` → `|c` fix~~ — DEFERRED (breaking change, tracked separately; resolved by Phase 7's OTel Counter mapping)
+
+---
+
+## 6.8 Phase 7: Native OTel Metrics Migration (Weeks 11-12)
+
+**Objective**: Replace `StatsDCollector` with a native OpenTelemetry Metrics SDK implementation behind the existing `beast::insight::Collector` interface, eliminating the StatsD UDP dependency and unifying traces and metrics into a single OTLP pipeline.
+
+### Why Migrate
+
+The Phase 6 StatsD bridge was a pragmatic first step, but it retains inherent limitations: UDP fire-and-forget with no delivery guarantees, non-standard `|m` wire format, 1472-byte MTU fragmentation, and a split-brain architecture where traces use OTLP but metrics use StatsD. Phase 7 resolves all of these by implementing a new `OTelCollectorImpl` behind the unchanged `beast::insight::Collector` interface — zero changes at call sites.
+
+**What we gain**: Unified OTLP pipeline, delivery guarantees, metric-trace correlation via shared resource attributes, explicit histogram buckets, simpler collector config (no StatsD receiver), and the `|m` meter issue is resolved by mapping to OTel `Counter<uint64_t>`.
+
+**What we lose**: StatsD ecosystem compatibility (mitigated: `server=statsd` retained as fallback), slightly higher memory (~1-2 MB for OTel aggregation state), and dependency on OTel C++ Metrics SDK stability (mitigated: SDK 1.18.0 is GA).
+
+See [Phase7_taskList.md](./Phase7_taskList.md) for full rationale, architecture diagrams, and detailed task breakdown.
+
+### Instrument Type Mapping
+
+| beast::insight         | OTel Metrics SDK                 | Rationale                                                        |
+| ---------------------- | -------------------------------- | ---------------------------------------------------------------- |
+| Counter (int64, `\|c`) | `Counter<int64_t>`               | Direct 1:1 mapping                                               |
+| Gauge (uint64, `\|g`)  | `ObservableGauge<uint64_t>`      | Async callback matches existing Hook polling pattern             |
+| Meter (uint64, `\|m`)  | `Counter<uint64_t>`              | Fixes non-standard wire format; meters are semantically counters |
+| Event (ms, `\|ms`)     | `Histogram<double>`              | Duration distributions with explicit bucket boundaries           |
+| Hook (1s callback)     | `PeriodicMetricReader` alignment | Same 1s collection interval                                      |
+
+### Tasks
+
+| Task | Description                                                               | Effort | Risk   |
+| ---- | ------------------------------------------------------------------------- | ------ | ------ |
+| 7.1  | Add OTel Metrics SDK to build deps (conan/cmake)                          | 0.5d   | Low    |
+| 7.2  | Implement `OTelCollector` class (~400-500 lines)                          | 3d     | Medium |
+| 7.3  | Update `CollectorManager` — add `server=otel`                             | 0.5d   | Low    |
+| 7.4  | Update OTel Collector YAML (add metrics pipeline, remove StatsD receiver) | 0.5d   | Low    |
+| 7.5  | Preserve metric names in Prometheus (naming strategy)                     | 1d     | Medium |
+| 7.6  | Update Grafana dashboards (if names change)                               | 1d     | Low    |
+| 7.7  | Update integration tests                                                  | 0.5d   | Low    |
+| 7.8  | Update documentation (runbook, reference docs)                            | 1d     | Low    |
+
+**Total Effort**: 8 days
+
+### Exit Criteria
+
+- [ ] All 255+ metrics visible in Prometheus via OTLP pipeline (no StatsD receiver)
+- [ ] `server=otel` is the default in development docker-compose
+- [ ] `server=statsd` still works as a fallback
+- [ ] Existing Grafana dashboards display data correctly
+- [ ] Integration test passes with OTLP-only metrics pipeline
+- [ ] No performance regression vs StatsD baseline (< 1% CPU overhead)
+- [ ] Deferred Task 6.1 (`|m` wire format) no longer relevant
+
+---
+
+## 6.8.1 Phase 8: Log-Trace Correlation and Loki Ingestion (Week 13)
+
+**Objective**: Inject trace context (trace_id, span_id) into rippled's Journal log output and add Grafana Loki as a centralized log backend with bidirectional trace-log correlation in Grafana.
+
+### Sub-Phases
+
+**Phase 8a** (code change): Modify `Logs::format()` to read the thread-local OTel span context and prepend `trace_id=<hex> span_id=<hex>` to every log line emitted within an active span. Zero changes to the ~2,242 JLOG call sites — injection is transparent.
+
+**Phase 8b** (infra only): Add Grafana Loki to the Docker observability stack and configure the OTel Collector's filelog receiver to parse rippled's log format, extract trace_id, and export to Loki. Configure Grafana's Tempo-to-Loki and Loki-to-Tempo derived field links for one-click correlation.
+
+See [Phase8_taskList.md](./Phase8_taskList.md) for full motivation, architecture diagrams, and detailed task breakdown.
+
+### Tasks
+
+| Task | Description                                | Sub-Phase | Effort | Risk   |
+| ---- | ------------------------------------------ | --------- | ------ | ------ |
+| 8.1  | Inject trace_id into `Logs::format()`      | 8a        | 1d     | Low    |
+| 8.2  | Add Loki to Docker Compose stack           | 8b        | 0.5d   | Low    |
+| 8.3  | Add filelog receiver to OTel Collector     | 8b        | 1d     | Medium |
+| 8.4  | Configure Grafana trace-to-log correlation | 8b        | 0.5d   | Low    |
+| 8.5  | Update integration tests                   | 8a + 8b   | 0.5d   | Low    |
+| 8.6  | Update documentation                       | 8a + 8b   | 1d     | Low    |
+
+**Total Effort**: 4.5 days
+
+### Exit Criteria
+
+- [ ] Log lines within active spans contain `trace_id=<hex> span_id=<hex>`
+- [ ] Log lines outside spans have no trace context (clean — no empty fields)
+- [ ] Loki ingests rippled logs via OTel Collector filelog receiver
+- [ ] Grafana Tempo → Loki one-click correlation works
+- [ ] Grafana Loki → Tempo reverse lookup works via derived field
+- [ ] Integration test verifies trace_id presence in logs
+- [ ] No performance regression from trace_id injection (< 0.1% overhead)
 
 ---
 
@@ -621,13 +709,16 @@ Clear, measurable criteria for each phase.
 
 ### 6.13.6 Success Metrics Summary
 
-| Phase   | Primary Metric         | Secondary Metric            | Deadline      |
-| ------- | ---------------------- | --------------------------- | ------------- |
-| Phase 1 | SDK compiles and runs  | Zero overhead when disabled | End of Week 2 |
-| Phase 2 | 100% RPC coverage      | <1ms latency overhead       | End of Week 4 |
-| Phase 3 | Cross-node traces work | <5% throughput impact       | End of Week 6 |
-| Phase 4 | Consensus fully traced | No consensus timing impact  | End of Week 8 |
-| Phase 5 | Production deployment  | Operators trained           | End of Week 9 |
+| Phase   | Primary Metric               | Secondary Metric            | Deadline       |
+| ------- | ---------------------------- | --------------------------- | -------------- |
+| Phase 1 | SDK compiles and runs        | Zero overhead when disabled | End of Week 2  |
+| Phase 2 | 100% RPC coverage            | <1ms latency overhead       | End of Week 4  |
+| Phase 3 | Cross-node traces work       | <5% throughput impact       | End of Week 6  |
+| Phase 4 | Consensus fully traced       | No consensus timing impact  | End of Week 8  |
+| Phase 5 | Production deployment        | Operators trained           | End of Week 9  |
+| Phase 6 | StatsD metrics in Prometheus | 3 dashboards operational    | End of Week 10 |
+| Phase 7 | All metrics via OTLP         | No StatsD dependency        | End of Week 12 |
+| Phase 8 | trace_id in all logs         | Loki ingestion working      | End of Week 13 |
 
 ---
 

@@ -447,6 +447,8 @@ span->SetAttribute("peer.id", peerId);
 
 ### 2.6.4 Coexistence Strategy
 
+> **Note**: Phase 7 replaces the StatsD bridge with native OTel Metrics SDK export. The diagram below shows the Phase 6 intermediate state. See [Phase7_taskList.md](./Phase7_taskList.md) for the migration design where Beast Insight emits via OTLP instead of StatsD.
+
 ```mermaid
 flowchart TB
     subgraph rippled["rippled Process"]
@@ -466,6 +468,8 @@ flowchart TB
     style rippled fill:#212121,stroke:#0a0a0a,color:#ffffff
     style grafana fill:#bf360c,stroke:#8c2809,color:#ffffff
 ```
+
+**Phase 7 target state**: Beast Insight routes to `OTelCollector` (new `Collector` implementation) which exports via OTLP/HTTP to the same collector endpoint as traces. StatsD UDP path becomes a deprecated fallback (`[insight] server=statsd`). See [06-implementation-phases.md §6.8](./06-implementation-phases.md) and [Phase7_taskList.md](./Phase7_taskList.md) for details.
 
 ### 2.6.5 Correlation with PerfLog
 
