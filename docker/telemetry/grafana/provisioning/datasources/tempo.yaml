@@ -5,7 +5,7 @@
 #
 # Search filters provide pre-configured dropdowns in the Explore UI.
 # Each phase adds filters for the span attributes it introduces.
-# Phase 1b (infra): Base filters — service name, span name, status.
+# Phase 1b (infra): Base filters — node identity, service, span name, status.
 
 apiVersion: 1
 
@@ -26,11 +26,44 @@ datasources:
         spanEndTimeShift: "1h"
       search:
         filters:
+          # --- Node identification filters ---
+          # service.name: logical service name (default: "rippled").
+          #   Useful when running multiple service types in the same collector.
           - id: service-name
             tag: service.name
             operator: "="
             scope: resource
             type: static
+          # service.instance.id: unique node identifier — defaults to the
+          #   node's public key (e.g., nHB1X37...). Distinguishes individual
+          #   nodes in a multi-node cluster or network.
+          - id: node-id
+            tag: service.instance.id
+            operator: "="
+            scope: resource
+            type: static
+          # service.version: rippled build version (e.g., "2.4.0-b1").
+          #   Filter traces from specific software releases.
+          - id: node-version
+            tag: service.version
+            operator: "="
+            scope: resource
+            type: dynamic
+          # xrpl.network.id: numeric network identifier
+          #   (0 = mainnet, 1 = testnet, 2 = devnet, etc.).
+          - id: network-id
+            tag: xrpl.network.id
+            operator: "="
+            scope: resource
+            type: dynamic
+          # xrpl.network.type: human-readable network name
+          #   ("mainnet", "testnet", "devnet", "standalone").
+          - id: network-type
+            tag: xrpl.network.type
+            operator: "="
+            scope: resource
+            type: static
+          # --- Span intrinsic filters ---
           - id: span-name
             tag: name
             operator: "="
