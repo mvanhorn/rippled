@@ -152,11 +152,22 @@ gantt
 
 **Total Effort**: 11 days
 
+### Spans Produced
+
+| Span Name                   | Location               | Attributes                                                                                                                    |
+| --------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `consensus.proposal.send`   | `RCLConsensus.cpp:177` | `xrpl.consensus.round`                                                                                                        |
+| `consensus.ledger_close`    | `RCLConsensus.cpp:282` | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`                                                                            |
+| `consensus.accept`          | `RCLConsensus.cpp:395` | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms`                                                                    |
+| `consensus.accept.apply`    | `RCLConsensus.cpp:453` | `xrpl.consensus.close_time`, `close_time_correct`, `close_resolution_ms`, `state`, `proposing`, `round_time_ms`, `ledger.seq` |
+| `consensus.validation.send` | `RCLConsensus.cpp:753` | `xrpl.consensus.proposing`                                                                                                    |
+
 ### Exit Criteria
 
 - [x] Complete consensus round traces
 - [x] Phase transitions visible
 - [x] Proposals and validations traced
+- [x] Close time agreement tracked (per `avCT_CONSENSUS_PCT`)
 - [x] No impact on consensus timing
 - [ ] Multi-validator test network validated
 

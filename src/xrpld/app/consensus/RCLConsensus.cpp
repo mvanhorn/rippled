@@ -443,6 +443,27 @@ RCLConsensus::Adaptor::doAccept(
         closeTimeCorrect = true;
     }
 
+    // Trace the ledger application phase with close time details.
+    // This span runs on the jtACCEPT job queue thread (posted by onAccept),
+    // separate from the consensus.accept span which fires synchronously in
+    // onAccept.  It captures the agreed-upon close time, whether validators
+    // converged on it (per avCT_CONSENSUS_PCT), and the consensus outcome.
+    XRPL_TRACE_CONSENSUS(app_.getTelemetry(), "consensus.accept.apply");
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.ledger.seq", static_cast<int64_t>(prevLedger.seq() + 1));
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.consensus.close_time",
+        static_cast<int64_t>(consensusCloseTime.time_since_epoch().count()));
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.close_time_correct", closeTimeCorrect);
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.consensus.close_resolution_ms",
+        static_cast<int64_t>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(closeResolution).count()));
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.consensus.state", std::string(consensusFail ? "moved_on" : "finished"));
+    XRPL_TRACE_SET_ATTR("xrpl.consensus.proposing", proposing);
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.consensus.round_time_ms", static_cast<int64_t>(result.roundTime.read().count()));
+
     JLOG(j_.debug()) << "Report: Prop=" << (proposing ? "yes" : "no")
                      << " val=" << (validating_ ? "yes" : "no")
                      << " corLCL=" << (haveCorrectLCL ? "yes" : "no")

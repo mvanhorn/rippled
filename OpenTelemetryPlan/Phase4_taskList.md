@@ -213,9 +213,32 @@
 
 **Parallel work**: Tasks 4.2, 4.3, and 4.4 can run in parallel after 4.1 is complete. Task 4.5 depends on all three. Task 4.6 depends on 4.2 and Phase 3.
 
+### Implemented Spans
+
+| Span Name                   | Method                             | Key Attributes                                                                                                                |
+| --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `consensus.proposal.send`   | `Adaptor::propose`                 | `xrpl.consensus.round`                                                                                                        |
+| `consensus.ledger_close`    | `Adaptor::onClose`                 | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`                                                                            |
+| `consensus.accept`          | `Adaptor::onAccept`                | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms`                                                                    |
+| `consensus.accept.apply`    | `Adaptor::doAccept`                | `xrpl.consensus.close_time`, `close_time_correct`, `close_resolution_ms`, `state`, `proposing`, `round_time_ms`, `ledger.seq` |
+| `consensus.validation.send` | `Adaptor::onAccept` (via validate) | `xrpl.consensus.proposing`                                                                                                    |
+
+#### Close Time Attributes (consensus.accept.apply)
+
+The `consensus.accept.apply` span captures ledger close time agreement details
+driven by `avCT_CONSENSUS_PCT` (75% validator agreement threshold):
+
+- **`xrpl.consensus.close_time`** — Agreed-upon ledger close time (epoch seconds). When validators disagree (`consensusCloseTime == epoch`), this is synthetically set to `prevCloseTime + 1s`.
+- **`xrpl.consensus.close_time_correct`** — `true` if validators reached agreement, `false` if they "agreed to disagree" (close time forced to prev+1s).
+- **`xrpl.consensus.close_resolution_ms`** — Rounding granularity for close time (starts at 30s, decreases as ledger interval stabilizes).
+- **`xrpl.consensus.state`** — `"finished"` (normal) or `"moved_on"` (consensus failed, adopted best available).
+- **`xrpl.consensus.proposing`** — Whether this node was proposing.
+- **`xrpl.consensus.round_time_ms`** — Total consensus round duration.
+
 **Exit Criteria** (from [06-implementation-phases.md §6.11.4](./06-implementation-phases.md)):
 
 - [ ] Complete consensus round traces
 - [ ] Phase transitions visible
 - [ ] Proposals and validations traced
+- [ ] Close time agreement tracked (per `avCT_CONSENSUS_PCT`)
 - [ ] No impact on consensus timing

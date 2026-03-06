@@ -8,7 +8,7 @@
 # Phase 1b (infra): Base filters — node identity, service, span name, status.
 # Phase 2 (RPC):    RPC command, status, role filters.
 # Phase 3 (TX):     Transaction hash, local/peer origin, status.
-# Phase 4 (Cons):   Consensus mode, round, ledger sequence.
+# Phase 4 (Cons):   Consensus mode, round, ledger sequence, close time.
 
 apiVersion: 1
 
@@ -130,3 +130,18 @@ datasources:
             operator: "="
             scope: span
             type: static
+          - id: consensus-close-time-correct
+            tag: xrpl.consensus.close_time_correct
+            operator: "="
+            scope: span
+            type: dynamic
+          - id: consensus-state
+            tag: xrpl.consensus.state
+            operator: "="
+            scope: span
+            type: dynamic
+          - id: consensus-close-resolution
+            tag: xrpl.consensus.close_resolution_ms
+            operator: "="
+            scope: span
+            type: dynamic
