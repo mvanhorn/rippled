@@ -122,8 +122,11 @@ public:
 */
 class TelemetryImpl : public Telemetry
 {
-    /** Configuration from the [telemetry] config section. */
-    Setup const setup_;
+    /** Configuration from the [telemetry] config section.
+        Non-const so setServiceInstanceId() can update the instance ID
+        before start() creates the OTel resource.
+    */
+    Setup setup_;
 
     /** Journal used for log output during start/stop. */
     beast::Journal const journal_;
@@ -138,6 +141,12 @@ class TelemetryImpl : public Telemetry
 public:
     TelemetryImpl(Setup const& setup, beast::Journal journal) : setup_(setup), journal_(journal)
     {
+    }
+
+    void
+    setServiceInstanceId(std::string const& id) override
+    {
+        setup_.serviceInstanceId = id;
     }
 
     void

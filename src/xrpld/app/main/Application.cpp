@@ -263,7 +263,7 @@ public:
               telemetry::make_Telemetry(
                   telemetry::setup_Telemetry(
                       config_->section("telemetry"),
-                      "",  // nodePublicKey not yet available at this point
+                      "",  // Updated later via setServiceInstanceId()
                       BuildInfo::getVersionString()),
                   logs_->journal("Telemetry")))
 
@@ -1273,6 +1273,12 @@ ApplicationImp::setup(boost::program_options::variables_map const& cmdline)
     m_orderBookDB->setup(getLedgerMaster().getCurrentLedger());
 
     nodeIdentity_ = getNodeIdentity(*this, cmdline);
+
+    // Now that the node identity is known, inject it into the telemetry
+    // resource attributes.  The Telemetry object was constructed with an
+    // empty serviceInstanceId because nodeIdentity_ is not available in
+    // the ApplicationImp member initializer list.
+    telemetry_->setServiceInstanceId(toBase58(TokenType::NodePublic, nodeIdentity_->first));
 
     if (!cluster_->load(config().section(SECTION_CLUSTER_NODES)))
     {

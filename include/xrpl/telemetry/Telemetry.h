@@ -108,6 +108,23 @@ public:
 
     virtual ~Telemetry() = default;
 
+    /** Update the service instance ID (OTel resource attribute
+        `service.instance.id`).
+
+        Must be called before start(). The node public key is not available
+        when Telemetry is constructed (during the ApplicationImp member
+        initializer list), so this setter allows Application::setup() to
+        inject the identity once nodeIdentity_ is known.
+
+        @param id  The node's base58-encoded public key or custom identifier.
+    */
+    virtual void
+    setServiceInstanceId(std::string const& id)
+    {
+        // Default no-op for NullTelemetry implementations.
+        (void)id;
+    }
+
     /** Initialize the tracing pipeline (exporter, processor, provider).
         Call after construction.
     */
