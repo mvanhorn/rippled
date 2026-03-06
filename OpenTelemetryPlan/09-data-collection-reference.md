@@ -126,6 +126,7 @@ Controlled by `trace_consensus=1` in `[telemetry]` config.
 | `consensus.ledger_close`    | —      | RCLConsensus.cpp | Ledger close event triggered by consensus     |
 | `consensus.accept`          | —      | RCLConsensus.cpp | Consensus accepts a ledger (round complete)   |
 | `consensus.validation.send` | —      | RCLConsensus.cpp | Validation message sent after ledger accepted |
+| `consensus.accept.apply`    | —      | RCLConsensus.cpp | Ledger application with close time details    |
 
 **Where to find**: Jaeger → Operation: `consensus.*`
 
@@ -197,13 +198,18 @@ Every span can carry key-value attributes that provide context for filtering and
 
 #### Consensus Attributes
 
-| Attribute                   | Type    | Set On                                                                    | Description                                                   |
-| --------------------------- | ------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `xrpl.consensus.round`      | int64   | `consensus.proposal.send`                                                 | Consensus round number                                        |
-| `xrpl.consensus.mode`       | string  | `consensus.proposal.send`, `consensus.ledger_close`                       | Node mode: `"syncing"`, `"tracking"`, `"full"`, `"proposing"` |
-| `xrpl.consensus.proposers`  | int64   | `consensus.proposal.send`, `consensus.accept`                             | Number of proposers in the round                              |
-| `xrpl.consensus.proposing`  | boolean | `consensus.validation.send`                                               | Whether this node was a proposer                              |
-| `xrpl.consensus.ledger.seq` | int64   | `consensus.ledger_close`, `consensus.accept`, `consensus.validation.send` | Ledger sequence number                                        |
+| Attribute                            | Type    | Set On                                                                                              | Description                                                   |
+| ------------------------------------ | ------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `xrpl.consensus.round`               | int64   | `consensus.proposal.send`                                                                           | Consensus round number                                        |
+| `xrpl.consensus.mode`                | string  | `consensus.proposal.send`, `consensus.ledger_close`                                                 | Node mode: `"syncing"`, `"tracking"`, `"full"`, `"proposing"` |
+| `xrpl.consensus.proposers`           | int64   | `consensus.proposal.send`, `consensus.accept`                                                       | Number of proposers in the round                              |
+| `xrpl.consensus.proposing`           | boolean | `consensus.validation.send`                                                                         | Whether this node was a proposer                              |
+| `xrpl.consensus.ledger.seq`          | int64   | `consensus.ledger_close`, `consensus.accept`, `consensus.validation.send`, `consensus.accept.apply` | Ledger sequence number                                        |
+| `xrpl.consensus.close_time`          | int64   | `consensus.accept.apply`                                                                            | Agreed-upon ledger close time (epoch seconds)                 |
+| `xrpl.consensus.close_time_correct`  | boolean | `consensus.accept.apply`                                                                            | Whether validators reached agreement on close time            |
+| `xrpl.consensus.close_resolution_ms` | int64   | `consensus.accept.apply`                                                                            | Close time rounding granularity in milliseconds               |
+| `xrpl.consensus.state`               | string  | `consensus.accept.apply`                                                                            | Consensus outcome: `"finished"` or `"moved_on"`               |
+| `xrpl.consensus.round_time_ms`       | int64   | `consensus.accept.apply`                                                                            | Total consensus round duration in milliseconds                |
 
 **Jaeger query**: Tag `xrpl.consensus.mode=proposing` to find rounds where node was proposing.
 
