@@ -2,6 +2,10 @@
 # Auto-configures Tempo as a trace data source on Grafana startup.
 # Access Grafana at http://localhost:3000, then use Explore -> Tempo
 # to browse rippled traces using TraceQL.
+#
+# Search filters provide pre-configured dropdowns in the Explore UI.
+# Each phase adds filters for the span attributes it introduces.
+# Phase 1b (infra): Base filters — service name, span name, status.
 
 apiVersion: 1
 
@@ -14,3 +18,31 @@ datasources:
     jsonData:
       nodeGraph:
         enabled: true
+      serviceMap:
+        datasourceUid: prometheus
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+      search:
+        filters:
+          - id: service-name
+            tag: service.name
+            operator: "="
+            scope: resource
+            type: static
+          - id: span-name
+            tag: name
+            operator: "="
+            scope: intrinsic
+            type: static
+          - id: span-status
+            tag: status
+            operator: "="
+            scope: intrinsic
+            type: static
+          - id: span-duration
+            tag: duration
+            operator: ">"
+            scope: intrinsic
+            type: static
