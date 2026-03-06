@@ -22,7 +22,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_rpc_command) (rate(traces_span_metrics_calls_total{xrpl_rpc_command=~\"$command\", service_instance_id=~\"$node\", span_name=~\"rpc.command.*\"}[5m]))",
+          "expr": "sum by (xrpl_rpc_command) (rate(traces_span_metrics_calls_total{xrpl_rpc_command=~\"$command\", exported_instance=~\"$node\", span_name=~\"rpc.command.*\"}[5m]))",
           "legendFormat": "{{xrpl_rpc_command}}"
         }
       ],
@@ -47,7 +47,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, xrpl_rpc_command) (rate(traces_span_metrics_duration_milliseconds_bucket{xrpl_rpc_command=~\"$command\", service_instance_id=~\"$node\", span_name=~\"rpc.command.*\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, xrpl_rpc_command) (rate(traces_span_metrics_duration_milliseconds_bucket{xrpl_rpc_command=~\"$command\", exported_instance=~\"$node\", span_name=~\"rpc.command.*\"}[5m])))",
           "legendFormat": "p95 {{xrpl_rpc_command}}"
         }
       ],
@@ -72,7 +72,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_rpc_command) (rate(traces_span_metrics_calls_total{xrpl_rpc_command=~\"$command\", service_instance_id=~\"$node\", span_name=~\"rpc.command.*\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum by (xrpl_rpc_command) (rate(traces_span_metrics_calls_total{service_instance_id=~\"$node\", xrpl_rpc_command=~\"$command\", span_name=~\"rpc.command.*\"}[5m])) * 100",
+          "expr": "sum by (xrpl_rpc_command) (rate(traces_span_metrics_calls_total{xrpl_rpc_command=~\"$command\", exported_instance=~\"$node\", span_name=~\"rpc.command.*\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum by (xrpl_rpc_command) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_rpc_command=~\"$command\", span_name=~\"rpc.command.*\"}[5m])) * 100",
           "legendFormat": "{{xrpl_rpc_command}}"
         }
       ],
@@ -113,7 +113,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(increase(traces_span_metrics_duration_milliseconds_bucket{xrpl_rpc_command=~\"$command\", service_instance_id=~\"$node\", span_name=~\"rpc.command.*\"}[5m])) by (le)",
+          "expr": "sum(increase(traces_span_metrics_duration_milliseconds_bucket{xrpl_rpc_command=~\"$command\", exported_instance=~\"$node\", span_name=~\"rpc.command.*\"}[5m])) by (le)",
           "legendFormat": "{{le}}",
           "format": "heatmap"
         }
@@ -129,7 +129,7 @@
         "label": "Node",
         "description": "Filter by rippled node (service.instance.id \u2014 defaults to node public key)",
         "type": "query",
-        "query": "label_values(traces_span_metrics_calls_total, service_instance_id)",
+        "query": "label_values(traces_span_metrics_calls_total, exported_instance)",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
