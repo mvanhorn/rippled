@@ -486,12 +486,6 @@ rippled_State_Accounting_Full_duration
 
 ---
 
-## 5a. Future: Log-Trace Correlation (Phase 8)
-
-> **Planned**: [Phase8_taskList.md](./Phase8_taskList.md) adds `trace_id` and `span_id` to every JLOG log line emitted within an active OTel span. Combined with Grafana Loki ingestion, this enables one-click navigation between traces (Tempo) and logs (Loki). No changes to JLOG call sites — injection is transparent in `Logs::format()`.
-
----
-
 ## 6. Known Issues
 
 | Issue                                                              | Impact                                           | Status                                                               |
