@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -9,16 +11,25 @@
     {
       "title": "Consensus Round Duration",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.accept\"}[5m])))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_instance_id=~\"$node\", span_name=\"consensus.accept\"}[5m])))",
           "legendFormat": "p95 round duration"
         },
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.accept\"}[5m])))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_instance_id=~\"$node\", span_name=\"consensus.accept\"}[5m])))",
           "legendFormat": "p50 round duration"
         }
       ],
@@ -32,11 +43,18 @@
     {
       "title": "Consensus Proposals Sent Rate",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "sum(rate(traces_span_metrics_calls_total{span_name=\"consensus.proposal.send\"}[5m]))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "sum(rate(traces_span_metrics_calls_total{service_instance_id=~\"$node\", span_name=\"consensus.proposal.send\"}[5m]))",
           "legendFormat": "proposals/sec"
         }
       ],
@@ -50,11 +68,18 @@
     {
       "title": "Ledger Close Duration",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.ledger_close\"}[5m])))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_instance_id=~\"$node\", span_name=\"consensus.ledger_close\"}[5m])))",
           "legendFormat": "p95 close duration"
         }
       ],
@@ -68,11 +93,18 @@
     {
       "title": "Validation Send Rate",
       "type": "stat",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "sum(rate(traces_span_metrics_calls_total{span_name=\"consensus.validation.send\"}[5m]))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "sum(rate(traces_span_metrics_calls_total{service_instance_id=~\"$node\", span_name=\"consensus.validation.send\"}[5m]))",
           "legendFormat": "validations/sec"
         }
       ],
@@ -87,16 +119,25 @@
       "title": "Ledger Apply Duration (doAccept)",
       "description": "Time spent applying the consensus result to build a new ledger. Measured by the consensus.accept.apply span in doAccept().",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.accept.apply\"}[5m])))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_instance_id=~\"$node\", span_name=\"consensus.accept.apply\"}[5m])))",
           "legendFormat": "p95 apply duration"
         },
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_name=\"consensus.accept.apply\"}[5m])))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{service_instance_id=~\"$node\", span_name=\"consensus.accept.apply\"}[5m])))",
           "legendFormat": "p50 apply duration"
         }
       ],
@@ -111,11 +152,18 @@
       "title": "Close Time Agreement",
       "description": "Rate of close time agreement vs disagreement across consensus rounds. Based on xrpl.consensus.close_time_correct attribute (true = validators agreed, false = agreed to disagree per avCT_CONSENSUS_PCT).",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus" },
-          "expr": "sum(rate(traces_span_metrics_calls_total{span_name=\"consensus.accept.apply\"}[5m]))",
+          "datasource": {
+            "type": "prometheus"
+          },
+          "expr": "sum(rate(traces_span_metrics_calls_total{service_instance_id=~\"$node\", span_name=\"consensus.accept.apply\"}[5m]))",
           "legendFormat": "total rounds/sec"
         }
       ],
@@ -129,8 +177,54 @@
   ],
   "schemaVersion": 39,
   "tags": ["rippled", "consensus", "telemetry"],
-  "templating": { "list": [] },
-  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "node",
+        "label": "Node",
+        "description": "Filter by rippled node (service.instance.id \u2014 defaults to node public key)",
+        "type": "query",
+        "query": "label_values(traces_span_metrics_calls_total, service_instance_id)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "consensus_mode",
+        "label": "Consensus Mode",
+        "description": "Filter by consensus mode (proposing, observing, wrongLedger, switchedLedger)",
+        "type": "query",
+        "query": "label_values(traces_span_metrics_calls_total{span_name=\"consensus.ledger_close\"}, xrpl_consensus_mode)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "title": "rippled Consensus Health",
   "uid": "rippled-consensus"
 }

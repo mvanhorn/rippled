@@ -23,6 +23,10 @@ processors:
 
 connectors:
   spanmetrics:
+    # Expose service.instance.id (node public key) as a Prometheus label so
+    # Grafana dashboards can filter metrics by individual node.
+    resource_metrics_key_attributes:
+      - service.instance.id
     histogram:
       explicit:
         buckets: [1ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 5s]
