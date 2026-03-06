@@ -386,12 +386,18 @@ exporters:
     tls:
       insecure: true
 
+  # Grafana Tempo for trace storage
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging, jaeger]
+      exporters: [logging, jaeger, otlp/tempo]
 ```
 
 ### 5.5.2 Production Configuration
@@ -533,6 +539,17 @@ services:
       - "16686:16686" # UI
       - "14250:14250" # gRPC
 
+  # Grafana Tempo for trace storage (recommended for production)
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200" # HTTP API
+
   # Grafana for dashboards
   grafana:
     image: grafana/grafana:10.2.3
@@ -547,6 +564,7 @@ services:
       - "3000:3000"
     depends_on:
       - jaeger
+      - tempo
 
   # Prometheus for metrics (optional, for correlation)
   prometheus:

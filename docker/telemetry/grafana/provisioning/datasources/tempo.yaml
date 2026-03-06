@@ -1,0 +1,16 @@
+# Grafana datasource provisioning for Grafana Tempo.
+# Auto-configures Tempo as a trace data source on Grafana startup.
+# Access Grafana at http://localhost:3000, then use Explore -> Tempo
+# to browse rippled traces using TraceQL.
+
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    uid: tempo
+    jsonData:
+      nodeGraph:
+        enabled: true
