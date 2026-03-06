@@ -1,39 +1,91 @@
 # Observability Data Collection Reference
 
 > **Audience**: Developers and operators. This is the single source of truth for all telemetry data collected by rippled's observability stack.
+>
+> **Related docs**: [docs/telemetry-runbook.md](../docs/telemetry-runbook.md) (operator runbook with alerting and troubleshooting) | [03-implementation-strategy.md](./03-implementation-strategy.md) (code structure and performance optimization) | [04-code-samples.md](./04-code-samples.md) (C++ instrumentation examples)
 
 ## Data Flow Overview
 
 ```mermaid
 graph LR
-    subgraph rippled Node
-        A[Trace Macros<br>XRPL_TRACE_SPAN] -->|OTLP/HTTP :4318| C[OTel Collector]
-        B[beast::insight<br>StatsD metrics] -->|UDP :8125| C
+    subgraph rippledNode["rippled Node"]
+        A["Trace Macros<br/>XRPL_TRACE_SPAN<br/>(OTLP/HTTP exporter)"]
+        B["beast::insight<br/>StatsD metrics<br/>(UDP sender)"]
     end
-    C -->|Jaeger export| D[Jaeger :16686<br>Trace search & visualization]
-    C -->|SpanMetrics connector| E[Prometheus :9090<br>RED metrics from spans]
-    C -->|StatsD receiver| E
-    E --> F[Grafana :3000<br>8 dashboards]
-    D --> F
 
-    style A fill:#4a90d9,color:#fff
-    style B fill:#d9534f,color:#fff
-    style C fill:#5cb85c,color:#fff
-    style D fill:#f0ad4e,color:#000
-    style E fill:#f0ad4e,color:#000
-    style F fill:#5bc0de,color:#000
+    subgraph collector["OTel Collector  :4317 / :4318 / :8125"]
+        direction TB
+        R1["OTLP Receiver<br/>:4317 gRPC  |  :4318 HTTP"]
+        R2["StatsD Receiver<br/>:8125 UDP"]
+        BP["Batch Processor<br/>timeout 1s, batch 100"]
+        SM["SpanMetrics Connector<br/>derives RED metrics<br/>from trace spans"]
+
+        R1 --> BP
+        BP --> SM
+    end
+
+    subgraph backends["Trace Backends  (choose one or both)"]
+        D["Jaeger  :16686<br/>Trace search &<br/>visualization"]
+        T["Grafana Tempo<br/>(preferred for production)<br/>S3/GCS long-term storage"]
+    end
+
+    subgraph metrics["Metrics Stack"]
+        E["Prometheus  :9090<br/>scrapes :8889<br/>span-derived + StatsD metrics"]
+    end
+
+    subgraph viz["Visualization"]
+        F["Grafana  :3000<br/>8 dashboards"]
+    end
+
+    A -->|"OTLP/HTTP :4318<br/>(traces + attributes)"| R1
+    B -->|"UDP :8125<br/>(gauges, counters, timers)"| R2
+
+    BP -->|"OTLP/gRPC :4317"| D
+    BP -->|"OTLP/gRPC"| T
+
+    SM -->|"span_calls_total<br/>span_duration_ms<br/>(6 dimension labels)"| E
+    R2 -->|"rippled_* gauges<br/>rippled_* counters<br/>rippled_* summaries"| E
+
+    E -->|"Prometheus<br/>data source"| F
+    D -->|"Jaeger<br/>data source"| F
+    T -->|"Tempo<br/>data source"| F
+
+    style A fill:#4a90d9,color:#fff,stroke:#2a6db5
+    style B fill:#d9534f,color:#fff,stroke:#b52d2d
+    style R1 fill:#5cb85c,color:#fff,stroke:#3d8b3d
+    style R2 fill:#5cb85c,color:#fff,stroke:#3d8b3d
+    style BP fill:#449d44,color:#fff,stroke:#2d6e2d
+    style SM fill:#449d44,color:#fff,stroke:#2d6e2d
+    style D fill:#f0ad4e,color:#000,stroke:#c78c2e
+    style T fill:#e8953a,color:#000,stroke:#b5732a
+    style E fill:#f0ad4e,color:#000,stroke:#c78c2e
+    style F fill:#5bc0de,color:#000,stroke:#3aa8c1
+    style rippledNode fill:#1a2633,color:#ccc,stroke:#4a90d9
+    style collector fill:#1a3320,color:#ccc,stroke:#5cb85c
+    style backends fill:#332a1a,color:#ccc,stroke:#f0ad4e
+    style metrics fill:#332a1a,color:#ccc,stroke:#f0ad4e
+    style viz fill:#1a2d33,color:#ccc,stroke:#5bc0de
 ```
 
-There are two independent telemetry pipelines:
+There are two independent telemetry pipelines entering a single **OTel Collector**:
 
-1. **OpenTelemetry Traces** — Distributed spans with attributes, exported via OTLP/HTTP to the collector, which sends them to Jaeger for visualization and derives RED metrics via the SpanMetrics connector.
-2. **beast::insight StatsD** — System-level gauges, counters, and timers emitted as StatsD UDP packets, received by the collector's StatsD receiver, and exported to Prometheus.
+1. **OpenTelemetry Traces** — Distributed spans with attributes, exported via OTLP/HTTP (:4318) to the collector's **OTLP Receiver**. The **Batch Processor** groups spans (1s timeout, batch size 100) before forwarding to trace backends. The **SpanMetrics Connector** derives RED metrics (rate, errors, duration) from every span and feeds them into the metrics pipeline.
+2. **beast::insight StatsD** — System-level gauges, counters, and timers emitted as StatsD UDP packets to port :8125, ingested by the collector's **StatsD Receiver**, and exported alongside span-derived metrics to Prometheus.
+
+**Trace backends** — The collector exports traces via OTLP/gRPC to one or both:
+
+- **Jaeger** (development) — Provides trace search UI at `:16686`. Easy single-binary setup.
+- **Grafana Tempo** (production) — Preferred for production. Supports S3/GCS object storage for cost-effective long-term trace retention and integrates natively with Grafana.
+
+> **Further reading**: [00-tracing-fundamentals.md](./00-tracing-fundamentals.md) for core OpenTelemetry concepts (traces, spans, context propagation, sampling). [07-observability-backends.md](./07-observability-backends.md) for production backend selection, collector placement, and sampling strategies.
 
 ---
 
 ## 1. OpenTelemetry Spans
 
 ### 1.1 Complete Span Inventory (16 spans)
+
+> **See also**: [02-design-decisions.md §2.3](./02-design-decisions.md#23-span-naming-conventions) for naming conventions and the full span catalog with rationale. [04-code-samples.md §4.6](./04-code-samples.md#46-span-flow-visualization) for span flow diagrams.
 
 #### RPC Spans
 
@@ -110,6 +162,8 @@ Controlled by `trace_peer=1` in `[telemetry]` config. **Disabled by default** (h
 
 ### 1.2 Complete Attribute Inventory (22 attributes)
 
+> **See also**: [02-design-decisions.md §2.4.2](./02-design-decisions.md#242-span-attributes-by-category) for attribute design rationale and privacy considerations.
+
 Every span can carry key-value attributes that provide context for filtering and aggregation.
 
 #### RPC Attributes
@@ -180,6 +234,8 @@ Every span can carry key-value attributes that provide context for filtering and
 
 ### 1.3 SpanMetrics — Derived Prometheus Metrics
 
+> **See also**: [01-architecture-analysis.md](./01-architecture-analysis.md) §1.8.2 for how span-derived metrics map to operational insights.
+
 The OTel Collector's SpanMetrics connector automatically generates RED (Rate, Errors, Duration) metrics from every span. No custom metrics code in rippled is needed.
 
 | Prometheus Metric                                  | Type      | Description                                                                    |
@@ -207,6 +263,8 @@ The OTel Collector's SpanMetrics connector automatically generates RED (Rate, Er
 ---
 
 ## 2. StatsD Metrics (beast::insight)
+
+> **See also**: [02-design-decisions.md](./02-design-decisions.md) for the beast::insight coexistence design. [06-implementation-phases.md](./06-implementation-phases.md) for the Phase 6 metric inventory.
 
 These are system-level metrics emitted by rippled's `beast::insight` framework via StatsD UDP. They cover operational data that doesn't map to individual trace spans.
 
@@ -302,6 +360,8 @@ For each of the 45+ overlay traffic categories (defined in `TrafficCount.h`), fo
 
 ## 3. Grafana Dashboard Reference
 
+> **See also**: [05-configuration-reference.md](./05-configuration-reference.md) §5.8 for Grafana data source provisioning (Tempo, Jaeger, Prometheus) and TraceQL query examples.
+
 ### 3.1 Span-Derived Dashboards (5)
 
 | Dashboard            | UID                    | Data Source              | Key Panels                                                                         |
@@ -329,6 +389,8 @@ For each of the 45+ overlay traffic categories (defined in `TrafficCount.h`), fo
 ---
 
 ## 4. Jaeger Trace Search Guide
+
+> **See also**: [08-appendix.md](./08-appendix.md) §8.2 for span hierarchy visualizations. [05-configuration-reference.md](./05-configuration-reference.md) §5.8.5 for TraceQL examples when using Grafana Tempo instead of Jaeger.
 
 ### Finding Traces by Type
 
@@ -371,6 +433,8 @@ ledger.store                  (persist to DB)
 ---
 
 ## 5. Prometheus Query Examples
+
+> **See also**: [05-configuration-reference.md](./05-configuration-reference.md) §5.8.7 for correlating Prometheus StatsD metrics with trace-derived metrics.
 
 ### Span-Derived Metrics
 
@@ -438,6 +502,8 @@ The telemetry system is designed with privacy in mind:
 ---
 
 ## 8. Configuration Quick Reference
+
+> **Full reference**: [05-configuration-reference.md](./05-configuration-reference.md) §5.1 for all `[telemetry]` options with defaults, the config parser implementation, and collector YAML configurations (dev and production).
 
 ### Minimal Setup (development)
 
