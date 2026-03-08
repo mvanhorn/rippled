@@ -1275,10 +1275,12 @@ ApplicationImp::setup(boost::program_options::variables_map const& cmdline)
     nodeIdentity_ = getNodeIdentity(*this, cmdline);
 
     // Now that the node identity is known, inject it into the telemetry
-    // resource attributes.  The Telemetry object was constructed with an
-    // empty serviceInstanceId because nodeIdentity_ is not available in
-    // the ApplicationImp member initializer list.
-    telemetry_->setServiceInstanceId(toBase58(TokenType::NodePublic, nodeIdentity_->first));
+    // resource attributes — but only if the user didn't already set a
+    // custom service_instance_id in [telemetry].  The Telemetry object
+    // was constructed with an empty serviceInstanceId because
+    // nodeIdentity_ is not available in the member initializer list.
+    if (!config_->section("telemetry").exists("service_instance_id"))
+        telemetry_->setServiceInstanceId(toBase58(TokenType::NodePublic, nodeIdentity_->first));
 
     if (!cluster_->load(config().section(SECTION_CLUSTER_NODES)))
     {
