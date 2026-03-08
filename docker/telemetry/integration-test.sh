@@ -298,6 +298,7 @@ ${IPS_FIXED}
 
 [telemetry]
 enabled=1
+service_instance_id=Node-${i}
 endpoint=http://localhost:4318/v1/traces
 exporter=otlp_http
 sampling_ratio=1.0
