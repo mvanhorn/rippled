@@ -168,7 +168,7 @@ The implementation spans 13 weeks across 8 phases:
 | 5     | Week 9      | Documentation         | Runbook, Dashboards, Training                               |
 | 6     | Week 10     | StatsD Metrics Bridge | OTel Collector StatsD receiver, 3 Grafana dashboards        |
 | 7     | Weeks 11-12 | Native OTel Metrics   | OTelCollector impl, OTLP metrics export, StatsD deprecation |
-| 8     | Week 13     | Log-Trace Correlation | trace_id in logs, Loki ingestion, Tempo↔Loki linking       |
+| 8     | Week 13     | Log-Trace Correlation | trace_id in logs, Loki ingestion, Tempo↔Loki linking        |
 
 **Total Effort**: 65.1 developer-days with 2 developers
 

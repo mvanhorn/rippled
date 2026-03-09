@@ -929,7 +929,7 @@ Clear, measurable criteria for each phase.
 | Phase 5 | Production deployment        | Operators trained           | End of Week 9  |
 | Phase 6 | StatsD metrics in Prometheus | 3 dashboards operational    | End of Week 10 |
 | Phase 7 | All metrics via OTLP         | No StatsD dependency        | End of Week 12 |
-| Phase 8 | trace_id in logs + Loki      | Tempo↔Loki correlation     | End of Week 13 |
+| Phase 8 | trace_id in logs + Loki      | Tempo↔Loki correlation      | End of Week 13 |
 
 ---
 
