@@ -134,13 +134,14 @@ flowchart TB
 
 ### Task Lists
 
-| Document                                   | Description                            |
-| ------------------------------------------ | -------------------------------------- |
-| [POC_taskList.md](./POC_taskList.md)       | Proof-of-concept telemetry integration |
-| [Phase2_taskList.md](./Phase2_taskList.md) | RPC layer trace instrumentation        |
-| [Phase3_taskList.md](./Phase3_taskList.md) | Peer overlay & consensus tracing       |
-| [Phase4_taskList.md](./Phase4_taskList.md) | Transaction lifecycle tracing          |
-| [Phase5_taskList.md](./Phase5_taskList.md) | Ledger processing & advanced tracing   |
+| Document                                                                   | Description                            |
+| -------------------------------------------------------------------------- | -------------------------------------- |
+| [POC_taskList.md](./POC_taskList.md)                                       | Proof-of-concept telemetry integration |
+| [Phase2_taskList.md](./Phase2_taskList.md)                                 | RPC layer trace instrumentation        |
+| [Phase3_taskList.md](./Phase3_taskList.md)                                 | Peer overlay & consensus tracing       |
+| [Phase4_taskList.md](./Phase4_taskList.md)                                 | Transaction lifecycle tracing          |
+| [Phase5_taskList.md](./Phase5_taskList.md)                                 | Ledger processing & advanced tracing   |
+| [Phase5_IntegrationTest_taskList.md](./Phase5_IntegrationTest_taskList.md) | Observability stack integration tests  |
 
 ---
 
