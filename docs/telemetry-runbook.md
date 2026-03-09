@@ -102,6 +102,7 @@ All spans instrumented in rippled, grouped by subsystem:
 # Find specific ledger's consensus details
 {name="consensus.accept.apply"} | xrpl.consensus.ledger.seq = 92345678
 ```
+
 ### Ledger Spans (Phase 5)
 
 | Span Name         | Source File          | Attributes                                                         | Description                   |
