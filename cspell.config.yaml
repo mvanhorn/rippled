@@ -71,6 +71,7 @@ words:
   - coldwallet
   - compr
   - conanfile
+  - cppcoro
   - conanrun
   - confs
   - connectability
@@ -101,9 +102,11 @@ words:
   - Falco
   - finalizers
   - firewalled
+  - fcontext
   - fmtdur
   - fsanitize
   - funclets
+  - gantt
   - gcov
   - gcovr
   - ghead
@@ -187,6 +190,7 @@ words:
   - ostr
   - pargs
   - partitioner
+  - pratik
   - paychan
   - paychans
   - permdex
@@ -208,6 +212,7 @@ words:
   - queuable
   - Raphson
   - replayer
+  - repost
   - rerere
   - retriable
   - RIPD
@@ -238,6 +243,7 @@ words:
   - soci
   - socidb
   - sslws
+  - stackful
   - statsd
   - STATSDCOLLECTOR
   - stissue
