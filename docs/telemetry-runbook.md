@@ -193,18 +193,19 @@ Five dashboards are pre-provisioned in `docker/telemetry/grafana/dashboards/`:
 
 ### Consensus Health (`rippled-consensus`)
 
-| Panel                         | Type       | PromQL                                                                             | Labels Used |
-| ----------------------------- | ---------- | ---------------------------------------------------------------------------------- | ----------- |
-| Consensus Round Duration      | timeseries | `histogram_quantile(0.95 / 0.50, ... {span_name="consensus.accept"})`              | —           |
-| Consensus Proposals Sent Rate | timeseries | `rate(traces_span_metrics_calls_total{span_name="consensus.proposal.send"}[5m])`   | —           |
-| Ledger Close Duration         | timeseries | `histogram_quantile(0.95, ... {span_name="consensus.ledger_close"})`               | —           |
-| Validation Send Rate          | stat       | `rate(traces_span_metrics_calls_total{span_name="consensus.validation.send"}[5m])` | —           |
-| Ledger Apply Duration         | timeseries | `histogram_quantile(0.95 / 0.50, ... {span_name="consensus.accept.apply"})`        | —           |
-| Close Time Agreement          | timeseries | `rate(traces_span_metrics_calls_total{span_name="consensus.accept.apply"}[5m])`    | —           |
+| Panel                         | Type       | PromQL                                                                             | Labels Used           |
+| ----------------------------- | ---------- | ---------------------------------------------------------------------------------- | --------------------- |
+| Consensus Round Duration      | timeseries | `histogram_quantile(0.95 / 0.50, ... {span_name="consensus.accept"})`              | —                     |
+| Consensus Proposals Sent Rate | timeseries | `rate(traces_span_metrics_calls_total{span_name="consensus.proposal.send"}[5m])`   | —                     |
+| Ledger Close Duration         | timeseries | `histogram_quantile(0.95, ... {span_name="consensus.ledger_close"})`               | —                     |
+| Validation Send Rate          | stat       | `rate(traces_span_metrics_calls_total{span_name="consensus.validation.send"}[5m])` | —                     |
+| Ledger Apply Duration         | timeseries | `histogram_quantile(0.95 / 0.50, ... {span_name="consensus.accept.apply"})`        | —                     |
+| Close Time Agreement          | timeseries | `rate(traces_span_metrics_calls_total{span_name="consensus.accept.apply"}[5m])`    | —                     |
 | Consensus Mode Over Time      | timeseries | `consensus.ledger_close` by `xrpl_consensus_mode`                                  | `xrpl_consensus_mode` |
 | Accept vs Close Rate          | timeseries | `consensus.accept` vs `consensus.ledger_close` rate                                | —                     |
 | Validation vs Close Rate      | timeseries | `consensus.validation.send` vs `consensus.ledger_close`                            | —                     |
 | Accept Duration Heatmap       | heatmap    | `consensus.accept` histogram buckets                                               | `le`                  |
+
 ### Ledger Operations (`rippled-ledger-ops`)
 
 | Panel                   | Type       | PromQL                                         | Labels Used |

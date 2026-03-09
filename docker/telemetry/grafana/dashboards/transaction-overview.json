@@ -330,11 +330,7 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": [
-    "rippled",
-    "transactions",
-    "telemetry"
-  ],
+  "tags": ["rippled", "transactions", "telemetry"],
   "templating": {
     "list": [
       {

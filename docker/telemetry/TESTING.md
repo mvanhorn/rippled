@@ -385,12 +385,12 @@ All 16 production span names instrumented across Phases 2-5:
 | `consensus.accept`          | RCLConsensus.cpp:395  | 4     | `xrpl.consensus.proposers`, `xrpl.consensus.round_time_ms`                        | Ledger accepted           |
 | `consensus.validation.send` | RCLConsensus.cpp:753  | 4     | `xrpl.consensus.ledger.seq`, `xrpl.consensus.proposing`                           | Validation sent           |
 | `consensus.accept.apply`    | RCLConsensus.cpp:453  | 4     | `xrpl.consensus.close_time`, `close_time_correct`, `close_resolution_ms`, `state` | Ledger apply + close time |
-| `tx.apply`                  | BuildLedger.cpp:88    | 5     | `xrpl.ledger.tx_count`, `xrpl.ledger.tx_failed`            | Ledger close (tx set)     |
-| `ledger.build`              | BuildLedger.cpp:31    | 5     | `xrpl.ledger.seq`                                          | Ledger build              |
-| `ledger.validate`           | LedgerMaster.cpp:915  | 5     | `xrpl.ledger.seq`, `xrpl.ledger.validations`               | Ledger validated          |
-| `ledger.store`              | LedgerMaster.cpp:409  | 5     | `xrpl.ledger.seq`                                          | Ledger stored             |
-| `peer.proposal.receive`     | PeerImp.cpp:1667      | 5     | `xrpl.peer.id`, `xrpl.peer.proposal.trusted`               | Peer sends proposal       |
-| `peer.validation.receive`   | PeerImp.cpp:2264      | 5     | `xrpl.peer.id`, `xrpl.peer.validation.trusted`             | Peer sends validation     |
+| `tx.apply`                  | BuildLedger.cpp:88    | 5     | `xrpl.ledger.tx_count`, `xrpl.ledger.tx_failed`                                   | Ledger close (tx set)     |
+| `ledger.build`              | BuildLedger.cpp:31    | 5     | `xrpl.ledger.seq`                                                                 | Ledger build              |
+| `ledger.validate`           | LedgerMaster.cpp:915  | 5     | `xrpl.ledger.seq`, `xrpl.ledger.validations`                                      | Ledger validated          |
+| `ledger.store`              | LedgerMaster.cpp:409  | 5     | `xrpl.ledger.seq`                                                                 | Ledger stored             |
+| `peer.proposal.receive`     | PeerImp.cpp:1667      | 5     | `xrpl.peer.id`, `xrpl.peer.proposal.trusted`                                      | Peer sends proposal       |
+| `peer.validation.receive`   | PeerImp.cpp:2264      | 5     | `xrpl.peer.id`, `xrpl.peer.validation.trusted`                                    | Peer sends validation     |
 
 ---
 
