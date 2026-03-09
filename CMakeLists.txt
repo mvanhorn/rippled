@@ -123,11 +123,11 @@ endif()
 # When OFF (default), all tracing code compiles to no-ops with zero overhead.
 # Enable via: conan install -o telemetry=True, or cmake -Dtelemetry=ON.
 option(telemetry "Enable OpenTelemetry tracing" OFF)
-if (telemetry)
+if(telemetry)
     find_package(opentelemetry-cpp CONFIG REQUIRED)
     add_compile_definitions(XRPL_ENABLE_TELEMETRY)
     message(STATUS "OpenTelemetry tracing enabled")
-endif ()
+endif()
 
 # Work around changes to Conan recipe for now.
 if(TARGET nudb::core)
