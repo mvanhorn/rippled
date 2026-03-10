@@ -11,6 +11,7 @@
 // with no locking — measured at <10ns per call.
 #ifdef XRPL_ENABLE_TELEMETRY
 #include <opentelemetry/context/runtime_context.h>
+#include <opentelemetry/trace/context.h>
 #include <opentelemetry/trace/provider.h>
 #endif  // XRPL_ENABLE_TELEMETRY
 
