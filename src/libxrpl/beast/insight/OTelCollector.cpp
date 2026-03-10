@@ -363,11 +363,17 @@ public:
     /**
      * @brief Construct the OTel collector and initialize the export pipeline.
      *
-     * @param endpoint  OTLP/HTTP metrics endpoint URL.
-     * @param prefix    Prefix for all metric names.
-     * @param journal   Journal for logging.
+     * @param endpoint    OTLP/HTTP metrics endpoint URL.
+     * @param prefix      Prefix for all metric names.
+     * @param instanceId  Value for the service.instance.id resource attribute.
+     *                    When empty, the attribute is omitted.
+     * @param journal     Journal for logging.
      */
-    OTelCollectorImp(std::string const& endpoint, std::string const& prefix, Journal journal);
+    OTelCollectorImp(
+        std::string const& endpoint,
+        std::string const& prefix,
+        std::string const& instanceId,
+        Journal journal);
 
     /**
      * @brief Shut down the MeterProvider, flushing any pending exports.
@@ -620,6 +626,7 @@ OTelMeterImpl::increment(value_type amount)
 OTelCollectorImp::OTelCollectorImp(
     std::string const& endpoint,
     std::string const& prefix,
+    std::string const& instanceId,
     Journal journal)
     : m_journal(journal), m_prefix(prefix)
 {
@@ -641,9 +648,13 @@ OTelCollectorImp::OTelCollectorImp(
         metrics_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOpts);
 
     // Configure resource attributes matching the trace exporter.
-    auto resourceAttrs = resource::Resource::Create({
-        {resource::SemanticConventions::kServiceName, "rippled"},
-    });
+    // Include service.instance.id when provided so Prometheus
+    // exported_instance labels distinguish multi-node deployments.
+    resource::ResourceAttributes attrs;
+    attrs[resource::SemanticConventions::kServiceName] = "rippled";
+    if (!instanceId.empty())
+        attrs[resource::SemanticConventions::kServiceInstanceId] = instanceId;
+    auto resourceAttrs = resource::Resource::Create(attrs);
 
     // Create MeterProvider.
     m_provider = metrics_sdk::MeterProviderFactory::Create(std::move(reader), resourceAttrs);
@@ -782,9 +793,13 @@ OTelCollectorImp::formatName(std::string const& name) const
 //------------------------------------------------------------------------------
 
 std::shared_ptr<Collector>
-OTelCollector::New(std::string const& endpoint, std::string const& prefix, Journal journal)
+OTelCollector::New(
+    std::string const& endpoint,
+    std::string const& prefix,
+    std::string const& instanceId,
+    Journal journal)
 {
-    return std::make_shared<detail::OTelCollectorImp>(endpoint, prefix, journal);
+    return std::make_shared<detail::OTelCollectorImp>(endpoint, prefix, instanceId, journal);
 }
 
 }  // namespace insight
@@ -805,6 +820,7 @@ std::shared_ptr<Collector>
 OTelCollector::New(
     std::string const& /* endpoint */,
     std::string const& /* prefix */,
+    std::string const& /* instanceId */,
     Journal /* journal */)
 {
     return NullCollector::New();

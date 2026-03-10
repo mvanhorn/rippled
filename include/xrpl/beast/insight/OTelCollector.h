@@ -70,15 +70,22 @@ public:
      * collector that exports metrics via OTLP/HTTP. When telemetry is
      * disabled at compile time, returns a NullCollector.
      *
-     * @param endpoint  OTLP/HTTP metrics endpoint URL
-     *                  (e.g. "http://localhost:4318/v1/metrics").
-     * @param prefix    Prefix prepended to all metric names
-     *                  (e.g. "rippled").
-     * @param journal   Journal for logging.
+     * @param endpoint    OTLP/HTTP metrics endpoint URL
+     *                    (e.g. "http://localhost:4318/v1/metrics").
+     * @param prefix      Prefix prepended to all metric names
+     *                    (e.g. "rippled").
+     * @param instanceId  Unique identifier for this node instance,
+     *                    emitted as the `service.instance.id` OTel
+     *                    resource attribute. Defaults to empty string
+     *                    (attribute omitted when empty).
+     * @param journal     Journal for logging.
      * @return Shared pointer to the created Collector.
      */
     static std::shared_ptr<Collector>
-    New(std::string const& endpoint, std::string const& prefix, Journal journal);
+    New(std::string const& endpoint,
+        std::string const& prefix,
+        std::string const& instanceId,
+        Journal journal);
 };
 
 }  // namespace insight

@@ -32,7 +32,12 @@ public:
                 endpoint = "http://localhost:4318/v1/metrics";
             std::string const& prefix(get(params, "prefix"));
 
-            m_collector = beast::insight::OTelCollector::New(endpoint, prefix, journal);
+            // Read service_instance_id, same key as the [telemetry]
+            // section uses, so multi-node deployments can distinguish
+            // metric sources via the exported_instance Prometheus label.
+            std::string const instanceId = get(params, "service_instance_id");
+
+            m_collector = beast::insight::OTelCollector::New(endpoint, prefix, instanceId, journal);
         }
         else
         {

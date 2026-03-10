@@ -30,7 +30,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rate(rippled_rpc_requests_total[5m])",
+          "expr": "rate(rippled_rpc_requests_total{exported_instance=~\"$node\"}[5m])",
           "legendFormat": "Requests / Sec"
         }
       ],
@@ -62,14 +62,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_time{quantile=\"0.95\"}",
+          "expr": "rippled_rpc_time{exported_instance=~\"$node\", quantile=\"0.95\"}",
           "legendFormat": "P95 Response Time"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_time{quantile=\"0.5\"}",
+          "expr": "rippled_rpc_time{exported_instance=~\"$node\", quantile=\"0.5\"}",
           "legendFormat": "P50 Response Time"
         }
       ],
@@ -108,14 +108,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_size{quantile=\"0.95\"}",
+          "expr": "rippled_rpc_size{exported_instance=~\"$node\", quantile=\"0.95\"}",
           "legendFormat": "P95 Response Size"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_size{quantile=\"0.5\"}",
+          "expr": "rippled_rpc_size{exported_instance=~\"$node\", quantile=\"0.5\"}",
           "legendFormat": "P50 Response Size"
         }
       ],
@@ -154,28 +154,28 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_time{quantile=\"0.5\"}",
+          "expr": "rippled_rpc_time{exported_instance=~\"$node\", quantile=\"0.5\"}",
           "legendFormat": "P50"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_time{quantile=\"0.9\"}",
+          "expr": "rippled_rpc_time{exported_instance=~\"$node\", quantile=\"0.9\"}",
           "legendFormat": "P90"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_time{quantile=\"0.95\"}",
+          "expr": "rippled_rpc_time{exported_instance=~\"$node\", quantile=\"0.95\"}",
           "legendFormat": "P95"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_rpc_time{quantile=\"0.99\"}",
+          "expr": "rippled_rpc_time{exported_instance=~\"$node\", quantile=\"0.99\"}",
           "legendFormat": "P99"
         }
       ],
@@ -214,14 +214,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_pathfind_fast{quantile=\"0.95\"}",
+          "expr": "rippled_pathfind_fast{exported_instance=~\"$node\", quantile=\"0.95\"}",
           "legendFormat": "P95 Fast Pathfind"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_pathfind_fast{quantile=\"0.5\"}",
+          "expr": "rippled_pathfind_fast{exported_instance=~\"$node\", quantile=\"0.5\"}",
           "legendFormat": "P50 Fast Pathfind"
         }
       ],
@@ -260,14 +260,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_pathfind_full{quantile=\"0.95\"}",
+          "expr": "rippled_pathfind_full{exported_instance=~\"$node\", quantile=\"0.95\"}",
           "legendFormat": "P95 Full Pathfind"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_pathfind_full{quantile=\"0.5\"}",
+          "expr": "rippled_pathfind_full{exported_instance=~\"$node\", quantile=\"0.5\"}",
           "legendFormat": "P50 Full Pathfind"
         }
       ],
@@ -306,7 +306,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rate(rippled_warn_total[5m])",
+          "expr": "rate(rippled_warn_total{exported_instance=~\"$node\"}[5m])",
           "legendFormat": "Warnings / Sec"
         }
       ],
@@ -354,7 +354,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rate(rippled_drop_total[5m])",
+          "expr": "rate(rippled_drop_total{exported_instance=~\"$node\"}[5m])",
           "legendFormat": "Drops / Sec"
         }
       ],
@@ -385,7 +385,28 @@
   "schemaVersion": 39,
   "tags": ["rippled", "statsd", "rpc", "pathfinding", "telemetry"],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "node",
+        "label": "Node",
+        "description": "Filter by rippled node (service.instance.id)",
+        "type": "query",
+        "query": "label_values(exported_instance)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
   },
   "time": {
     "from": "now-1h",
