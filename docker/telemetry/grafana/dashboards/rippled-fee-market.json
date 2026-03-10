@@ -30,14 +30,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_count\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_count\"}",
           "legendFormat": "Queue Depth"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_max_size\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_max_size\"}",
           "legendFormat": "Max Capacity"
         }
       ],
@@ -77,14 +77,14 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_in_ledger\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_in_ledger\"}",
           "legendFormat": "In Ledger"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_per_ledger\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_per_ledger\"}",
           "legendFormat": "Expected Per Ledger"
         }
       ],
@@ -124,28 +124,28 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_reference_fee_level\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_reference_fee_level\"}",
           "legendFormat": "Reference Fee Level"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_min_processing_fee_level\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_min_processing_fee_level\"}",
           "legendFormat": "Min Processing Fee Level"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_med_fee_level\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_med_fee_level\"}",
           "legendFormat": "Median Fee Level"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_txq_metrics{metric=\"txq_open_ledger_fee_level\"}",
+          "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_open_ledger_fee_level\"}",
           "legendFormat": "Open Ledger Fee Level"
         }
       ],
@@ -189,28 +189,28 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor\"}",
           "legendFormat": "Combined Load Factor"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor_server\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_server\"}",
           "legendFormat": "Server"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor_fee_escalation\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_fee_escalation\"}",
           "legendFormat": "Fee Escalation"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor_fee_queue\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_fee_queue\"}",
           "legendFormat": "Fee Queue"
         }
       ],
@@ -266,21 +266,21 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor_local\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_local\"}",
           "legendFormat": "Local"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor_net\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_net\"}",
           "legendFormat": "Network"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "rippled_load_factor_metrics{metric=\"load_factor_cluster\"}",
+          "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_cluster\"}",
           "legendFormat": "Cluster"
         }
       ],
@@ -303,7 +303,28 @@
   "schemaVersion": 39,
   "tags": ["rippled", "otel", "fee-market"],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "node",
+        "label": "Node",
+        "description": "Filter by rippled node (service.instance.id)",
+        "type": "query",
+        "query": "label_values(exported_instance)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
   },
   "time": {
     "from": "now-1h",
