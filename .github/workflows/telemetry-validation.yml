@@ -1,0 +1,164 @@
+# Telemetry Validation CI Workflow
+#
+# Builds rippled with telemetry enabled, runs the multi-node workload
+# harness, validates all telemetry data, and runs performance benchmarks.
+#
+# This is a separate workflow from the main CI. It runs:
+#   - On manual dispatch (workflow_dispatch)
+#   - On pushes to telemetry-related branches
+#
+# The workflow is intentionally heavyweight (builds rippled, starts Docker
+# services, runs a multi-node cluster) — it validates the full telemetry
+# stack end-to-end rather than individual unit tests.
+
+name: Telemetry Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      rpc_rate:
+        description: "RPC load rate (requests per second)"
+        required: false
+        default: "50"
+      rpc_duration:
+        description: "RPC load duration (seconds)"
+        required: false
+        default: "120"
+      tx_tps:
+        description: "Transaction submit rate (TPS)"
+        required: false
+        default: "5"
+      tx_duration:
+        description: "Transaction submit duration (seconds)"
+        required: false
+        default: "120"
+      run_benchmark:
+        description: "Run performance benchmarks"
+        required: false
+        type: boolean
+        default: false
+
+  push:
+    branches:
+      - "pratik/otel-phase*"
+      - "feature/otel-*"
+      - "feature/telemetry-*"
+    paths:
+      - "docker/telemetry/**"
+      - "include/xrpl/basics/Telemetry*.h"
+      - "src/xrpld/app/misc/Telemetry*"
+
+concurrency:
+  group: telemetry-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-telemetry:
+    name: Telemetry Stack Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      # Docker-in-Docker not needed — we use docker compose directly.
+      # The runner has Docker pre-installed.
+      docker:
+        image: docker:dind
+        options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq bc python3 python3-pip
+
+      - name: Install Python dependencies
+        run: pip3 install -r docker/telemetry/workload/requirements.txt
+
+      - name: Set up Conan and build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.conan2
+            .build
+          key: telemetry-build-${{ runner.os }}-${{ hashFiles('conanfile.py', 'CMakeLists.txt') }}
+          restore-keys: |
+            telemetry-build-${{ runner.os }}-
+
+      - name: Build rippled with telemetry
+        run: |
+          conan install . --build=missing -o telemetry=True
+          cmake --preset default -Dtelemetry=ON
+          cmake --build --preset default --parallel $(nproc)
+
+      - name: Make scripts executable
+        run: |
+          chmod +x docker/telemetry/workload/*.sh
+
+      - name: Run full telemetry validation
+        id: validation
+        env:
+          XRPLD: .build/xrpld
+        run: |
+          ARGS="--xrpld .build/xrpld --skip-loki"
+          ARGS="$ARGS --rpc-rate ${{ github.event.inputs.rpc_rate || '50' }}"
+          ARGS="$ARGS --rpc-duration ${{ github.event.inputs.rpc_duration || '120' }}"
+          ARGS="$ARGS --tx-tps ${{ github.event.inputs.tx_tps || '5' }}"
+          ARGS="$ARGS --tx-duration ${{ github.event.inputs.tx_duration || '120' }}"
+          if [ "${{ github.event.inputs.run_benchmark }}" = "true" ]; then
+            ARGS="$ARGS --with-benchmark"
+          fi
+          docker/telemetry/workload/run-full-validation.sh $ARGS
+        continue-on-error: true
+
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: telemetry-validation-reports
+          path: /tmp/xrpld-validation/reports/
+          retention-days: 30
+
+      - name: Upload node logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xrpld-node-logs
+          path: /tmp/xrpld-validation/node*/debug.log
+          retention-days: 7
+
+      - name: Print validation summary
+        if: always()
+        run: |
+          REPORT="/tmp/xrpld-validation/reports/validation-report.json"
+          if [ -f "$REPORT" ]; then
+            echo "## Telemetry Validation Results" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            TOTAL=$(jq '.summary.total' "$REPORT")
+            PASSED=$(jq '.summary.passed' "$REPORT")
+            FAILED=$(jq '.summary.failed' "$REPORT")
+            echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Total Checks | $TOTAL |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Passed | $PASSED |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Failed | $FAILED |" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$FAILED" -gt 0 ]; then
+              echo "### Failed Checks" >> "$GITHUB_STEP_SUMMARY"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              jq -r '.checks[] | select(.passed == false) | "- **\(.name)**: \(.message)"' "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker/telemetry/workload/run-full-validation.sh --cleanup 2>/dev/null || true
+
+      - name: Check validation result
+        if: steps.validation.outcome == 'failure'
+        run: |
+          echo "Telemetry validation failed. Check the uploaded reports for details."
+          exit 1
