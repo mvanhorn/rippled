@@ -34,7 +34,7 @@ graph LR
     end
 
     subgraph viz["Visualization"]
-        F["Grafana  :3000<br/>8 dashboards"]
+        F["Grafana  :3000<br/>10 dashboards"]
     end
 
     A -->|"OTLP/HTTP :4318<br/>(traces + attributes)"| R1
@@ -360,7 +360,7 @@ For each of the 45+ overlay traffic categories (defined in `TrafficCount.h`), fo
 | `ping` / `status`                                                 | Keepalive and status       |
 | `set_get`                                                         | Set requests               |
 
-**Grafana dashboard**: _Network Traffic (StatsD)_ (`rippled-statsd-network`)
+**Grafana dashboards**: _Network Traffic_ (`rippled-statsd-network`), _Overlay Traffic Detail_ (`rippled-statsd-overlay-detail`), _Ledger Data & Sync_ (`rippled-statsd-ledger-sync`)
 
 ---
 
@@ -378,19 +378,21 @@ For each of the 45+ overlay traffic categories (defined in `TrafficCount.h`), fo
 | Ledger Operations    | `rippled-ledger-ops`   | Prometheus (SpanMetrics) | Build rate, build duration, validation rate, store rate, build vs close comparison |
 | Peer Network         | `rippled-peer-net`     | Prometheus (SpanMetrics) | Proposal receive rate, validation receive rate, trusted vs untrusted breakdown     |
 
-### 3.2 StatsD Dashboards (3)
+### 3.2 StatsD Dashboards (5)
 
-| Dashboard         | UID                          | Data Source         | Key Panels                                                                    |
-| ----------------- | ---------------------------- | ------------------- | ----------------------------------------------------------------------------- |
-| Node Health       | `rippled-statsd-node-health` | Prometheus (StatsD) | Ledger age, operating mode, I/O latency, job queue, fetch rate                |
-| Network Traffic   | `rippled-statsd-network`     | Prometheus (StatsD) | Active peers, disconnects, bytes in/out, messages in/out, traffic by category |
-| RPC & Pathfinding | `rippled-statsd-rpc`         | Prometheus (StatsD) | RPC rate, response time/size, pathfinding duration, resource warnings/drops   |
+| Dashboard              | UID                             | Data Source         | Key Panels                                                                        |
+| ---------------------- | ------------------------------- | ------------------- | --------------------------------------------------------------------------------- |
+| Node Health            | `rippled-statsd-node-health`    | Prometheus (StatsD) | Ledger age, operating mode, I/O latency, job queue, fetch rate                    |
+| Network Traffic        | `rippled-statsd-network`        | Prometheus (StatsD) | Active peers, disconnects, bytes in/out, messages in/out, traffic by category     |
+| RPC & Pathfinding      | `rippled-statsd-rpc`            | Prometheus (StatsD) | RPC rate, response time/size, pathfinding duration, resource warnings/drops       |
+| Overlay Traffic Detail | `rippled-statsd-overlay-detail` | Prometheus (StatsD) | Squelch, overhead, validator lists, set get/share, have/requested tx, proof paths |
+| Ledger Data & Sync     | `rippled-statsd-ledger-sync`    | Prometheus (StatsD) | Ledger data exchange, legacy ledger share/get, getobject by type, traffic heatmap |
 
 ### 3.3 Accessing the Dashboards
 
 1. Open Grafana at **http://localhost:3000**
 2. Navigate to **Dashboards → rippled** folder
-3. All 8 dashboards are auto-provisioned from `docker/telemetry/grafana/dashboards/`
+3. All 10 dashboards are auto-provisioned from `docker/telemetry/grafana/dashboards/`
 
 ---
 
