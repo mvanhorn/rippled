@@ -214,7 +214,7 @@ fi
 # ---------------------------------------------------------------------------
 # Write output JSON
 # ---------------------------------------------------------------------------
-cat > "$OUTPUT_FILE" <<EOJSON
+cat > "$OUTPUT_FILE" <<EOF_JSON
 {
   "cpu_pct_avg": $CPU_AVG,
   "memory_rss_mb_peak": $MEM_PEAK,
@@ -227,7 +227,7 @@ cat > "$OUTPUT_FILE" <<EOJSON
   "initial_ledger_seq": $INITIAL_SEQ,
   "final_ledger_seq": $FINAL_SEQ
 }
-EOJSON
+EOF_JSON
 
 ok "Metrics written to $OUTPUT_FILE"
 cat "$OUTPUT_FILE"

@@ -77,11 +77,17 @@ jobs:
       - name: Install Python dependencies
         run: pip3 install -r docker/telemetry/workload/requirements.txt
 
-      - name: Set up Conan and build cache
+      - name: Install Conan
+        run: pip3 install conan
+
+      - name: Set up Conan
+        uses: ./.github/actions/setup-conan
+
+      - name: Cache Conan packages and build directory
         uses: actions/cache@v4
         with:
           path: |
-            ~/.conan2
+            ~/.conan2/p
             .build
           key: telemetry-build-${{ runner.os }}-${{ hashFiles('conanfile.py', 'CMakeLists.txt') }}
           restore-keys: |
@@ -89,9 +95,9 @@ jobs:
 
       - name: Build rippled with telemetry
         run: |
-          conan install . --build=missing -o telemetry=True
-          cmake --preset default -Dtelemetry=ON
-          cmake --build --preset default --parallel $(nproc)
+          conan install . --build=missing --profile ci --output-folder=build
+          cmake -B build -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -Dtelemetry=ON
+          cmake --build build --parallel $(nproc)
 
       - name: Make scripts executable
         run: |
@@ -100,9 +106,9 @@ jobs:
       - name: Run full telemetry validation
         id: validation
         env:
-          XRPLD: .build/xrpld
+          XRPLD: build/xrpld
         run: |
-          ARGS="--xrpld .build/xrpld --skip-loki"
+          ARGS="--xrpld build/xrpld --skip-loki"
           ARGS="$ARGS --rpc-rate ${{ github.event.inputs.rpc_rate || '50' }}"
           ARGS="$ARGS --rpc-duration ${{ github.event.inputs.rpc_duration || '120' }}"
           ARGS="$ARGS --tx-tps ${{ github.event.inputs.tx_tps || '5' }}"
