@@ -231,7 +231,7 @@ When using StatsD, uncomment the `statsd` receiver in `otel-collector-config.yam
 
 ## Grafana Dashboards
 
-Eight dashboards are pre-provisioned in `docker/telemetry/grafana/dashboards/`:
+Thirteen dashboards are pre-provisioned in `docker/telemetry/grafana/dashboards/`:
 
 ### RPC Performance (`rippled-rpc-perf`)
 
@@ -403,7 +403,73 @@ count_over_time({job="rippled"} |= "trace_id=" [5m])
 4. Open Grafana at http://localhost:3000 -> Explore -> Loki and search for `{job="rippled"} |= "trace_id="`.
 5. Click the TraceID link to navigate to the corresponding trace in Tempo.
 
+## Phase 9: OTel Metrics Alerting Rules
+
+The following alerting rules are recommended for the Phase 9 OTel SDK metrics.
+Add to your Prometheus alerting rules configuration.
+
+### NodeStore
+
+| Alert Name                  | Severity | Condition                                            | For | Description                                             |
+| --------------------------- | -------- | ---------------------------------------------------- | --- | ------------------------------------------------------- |
+| `NodeStoreHighWriteLoad`    | Warning  | `rippled_nodestore_state{metric="write_load"} > 100` | 5m  | NodeStore backend is under sustained write pressure     |
+| `NodeStoreReadQueueBacklog` | Warning  | `rippled_nodestore_state{metric="read_queue"} > 500` | 5m  | Prefetch thread pool is saturated; reads are backing up |
+
+### Cache
+
+| Alert Name              | Severity | Condition                                               | For | Description                                            |
+| ----------------------- | -------- | ------------------------------------------------------- | --- | ------------------------------------------------------ |
+| `SLECacheHitRateLow`    | Warning  | `rippled_cache_metrics{metric="SLE_hit_rate"} < 0.5`    | 10m | SLE cache is thrashing; consider increasing cache size |
+| `LedgerCacheHitRateLow` | Warning  | `rippled_cache_metrics{metric="ledger_hit_rate"} < 0.5` | 10m | Ledger cache hit rate is degraded                      |
+
+### Transaction Queue
+
+| Alert Name             | Severity | Condition                                                                                                              | For | Description                                        |
+| ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- | --- | -------------------------------------------------- |
+| `TxQNearCapacity`      | Warning  | `rippled_txq_metrics{metric="txq_count"} / rippled_txq_metrics{metric="txq_max_size"} > 0.8`                           | 5m  | TxQ is >80% full; transactions may be rejected     |
+| `TxQHighFeeEscalation` | Warning  | `rippled_txq_metrics{metric="txq_open_ledger_fee_level"} / rippled_txq_metrics{metric="txq_reference_fee_level"} > 10` | 5m  | Fee escalation is 10x above reference; high demand |
+
+### Load Factor
+
+| Alert Name            | Severity | Condition                                                      | For | Description                                                    |
+| --------------------- | -------- | -------------------------------------------------------------- | --- | -------------------------------------------------------------- |
+| `HighLoadFactor`      | Warning  | `rippled_load_factor_metrics{metric="load_factor"} > 5`        | 10m | Combined load factor is elevated; transactions cost 5x+ normal |
+| `HighLocalLoadFactor` | Critical | `rippled_load_factor_metrics{metric="load_factor_local"} > 10` | 5m  | Local server load is critically elevated                       |
+
+### RPC Performance
+
+| Alert Name         | Severity | Condition                                                                                                  | For | Description                       |
+| ------------------ | -------- | ---------------------------------------------------------------------------------------------------------- | --- | --------------------------------- |
+| `HighRPCErrorRate` | Warning  | `sum(rate(rippled_rpc_method_errored_total[5m])) / sum(rate(rippled_rpc_method_started_total[5m])) > 0.05` | 5m  | >5% of RPC calls are erroring     |
+| `SlowRPCLatency`   | Warning  | `histogram_quantile(0.95, sum by (le) (rate(rippled_rpc_method_duration_us_bucket[5m]))) > 5000000`        | 5m  | RPC p95 latency exceeds 5 seconds |
+
+### Job Queue
+
+| Alert Name         | Severity | Condition                                                                                             | For | Description                                          |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------- | --- | ---------------------------------------------------- |
+| `JobQueueBacklog`  | Warning  | `sum(rate(rippled_job_queued_total[5m])) - sum(rate(rippled_job_finished_total[5m])) > 100`           | 5m  | Jobs are being queued faster than they're completing |
+| `SlowJobExecution` | Warning  | `histogram_quantile(0.95, sum by (le) (rate(rippled_job_running_duration_us_bucket[5m]))) > 10000000` | 5m  | Job execution p95 exceeds 10 seconds                 |
+
 ## Troubleshooting
+
+### No OTel SDK metrics in Prometheus
+
+1. Verify `enabled=1` in the `[telemetry]` config section
+2. Check that `metrics_endpoint` points to the OTel Collector's HTTP receiver
+   (default: `http://localhost:4318/v1/metrics`)
+3. Check rippled logs for `MetricsRegistry: started successfully` message
+4. Verify the OTel Collector is configured with an OTLP receiver and Prometheus exporter
+5. Check Prometheus targets page for the collector scrape target
+
+### Cache hit rates are zero
+
+Cache hit rates may be zero during startup before caches are warmed. Wait for the
+node to reach `Full` operating mode and process several ledgers before investigating.
+
+### NodeStore I/O counters not incrementing
+
+NodeStore counters are cumulative and may appear flat if the node is idle. Submit
+some transactions or RPC requests to generate I/O activity.
 
 ### No traces appearing in Jaeger
 
