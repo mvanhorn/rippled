@@ -3,6 +3,7 @@
 # Pipelines:
 #   traces: OTLP receiver -> batch processor -> debug + Jaeger + Tempo + spanmetrics
 #   metrics: OTLP receiver + spanmetrics connector -> Prometheus exporter
+#   logs:   filelog receiver -> batch processor -> Loki exporter (Phase 8)
 #
 # rippled sends traces via OTLP/HTTP to port 4318. The collector batches
 # them, forwards to both Jaeger and Tempo, and derives RED metrics via the
@@ -17,6 +18,12 @@
 # but commented out. If you need StatsD fallback (server=statsd in
 # [insight]), uncomment the statsd receiver and add it to the metrics
 # pipeline receivers list.
+#
+# Phase 8: The filelog receiver tails rippled's debug.log files under
+# /var/log/rippled/ (mounted from the host). A regex_parser operator
+# extracts timestamp, partition, severity, and optional trace_id/span_id
+# fields injected by Logs::format(). Parsed logs are exported to Grafana
+# Loki for log-trace correlation.
 
 receivers:
   otlp:
@@ -41,6 +48,18 @@ receivers:
   #       observer_type: "summary"
   #       summary:
   #         percentiles: [0, 50, 90, 95, 99, 100]
+  # Phase 8: Filelog receiver tails rippled debug.log files for log-trace
+  # correlation. Extracts structured fields (timestamp, partition, severity,
+  # trace_id, span_id, message) via regex. The trace_id and span_id are
+  # optional — only present when the log was emitted within an active span.
+  filelog:
+    include: [/var/log/rippled/*/debug.log]
+    operators:
+      - type: regex_parser
+        regex: '^(?P<timestamp>\S+)\s+(?P<partition>\S+):(?P<severity>\S+)\s+(?:trace_id=(?P<trace_id>[a-f0-9]+)\s+span_id=(?P<span_id>[a-f0-9]+)\s+)?(?P<message>.*)$'
+        timestamp:
+          parse_from: attributes.timestamp
+          layout: "%Y-%b-%d %H:%M:%S.%f"
 
 processors:
   batch:
@@ -75,6 +94,11 @@ exporters:
     endpoint: tempo:4317
     tls:
       insecure: true
+  # Phase 8: Loki exporter sends parsed log entries to Grafana Loki.
+  # Uses the native loki exporter which translates OTel log records
+  # into Loki's push API format with label extraction.
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
   prometheus:
     endpoint: 0.0.0.0:8889
 
@@ -88,3 +112,9 @@ service:
       receivers: [otlp, spanmetrics]
       processors: [batch]
       exporters: [prometheus]
+    # Phase 8: Log pipeline ingests rippled debug.log via filelog receiver,
+    # batches entries, and exports to Loki for log-trace correlation.
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [loki]
