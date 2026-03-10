@@ -17,7 +17,7 @@
  *   OTelCounterImpl / OTelGaugeImpl / OTelEventImpl / OTelMeterImpl
  *       |                    |                |              |
  *       v                    v                v              v
- *   OTel Counter<int64>  ObservableGauge  Histogram<double>  Counter<uint64>
+ *   OTel Counter<uint64> ObservableGauge  Histogram<double>  Counter<uint64>
  *       |                    |                |              |
  *       +--------------------+----------------+--------------+
  *       |
@@ -41,6 +41,7 @@
 
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_options.h>
+#include <opentelemetry/metrics/async_instruments.h>
 #include <opentelemetry/metrics/meter.h>
 #include <opentelemetry/metrics/meter_provider.h>
 #include <opentelemetry/metrics/observer_result.h>
@@ -152,7 +153,7 @@ private:
     operator=(OTelCounterImpl const&);
 
     /** OTel synchronous counter instrument. */
-    opentelemetry::nostd::unique_ptr<metrics_api::Counter<int64_t>> m_counter;
+    opentelemetry::nostd::unique_ptr<metrics_api::Counter<uint64_t>> m_counter;
 };
 
 //------------------------------------------------------------------------------
@@ -520,7 +521,7 @@ OTelHookImpl::callHandler()
 OTelCounterImpl::OTelCounterImpl(
     std::string const& name,
     opentelemetry::nostd::shared_ptr<metrics_api::Meter> const& meter)
-    : m_counter(meter->CreateInt64Counter(name))
+    : m_counter(meter->CreateUInt64Counter(name))
 {
 }
 
@@ -528,9 +529,9 @@ void
 OTelCounterImpl::increment(value_type amount)
 {
     // OTel counters require non-negative values. beast::insight CounterImpl
-    // uses int64_t, so clamp negative values to 0.
+    // uses int64_t, so clamp negative values to 0 and cast to uint64_t.
     if (amount > 0)
-        m_counter->Add(amount);
+        m_counter->Add(static_cast<uint64_t>(amount));
 }
 
 //------------------------------------------------------------------------------
@@ -630,8 +631,9 @@ OTelCollectorImp::OTelCollectorImp(
     Journal journal)
     : m_journal(journal), m_prefix(prefix)
 {
-    JLOG(m_journal.info()) << "OTelCollector starting: endpoint=" << endpoint
-                           << " prefix=" << m_prefix;
+    if (m_journal.info)
+        m_journal.info() << "OTelCollector starting: endpoint=" << endpoint
+                         << " prefix=" << m_prefix;
 
     // Configure OTLP HTTP metric exporter.
     otlp_http::OtlpHttpMetricExporterOptions exporterOpts;
@@ -656,22 +658,25 @@ OTelCollectorImp::OTelCollectorImp(
         attrs[resource::SemanticConventions::kServiceInstanceId] = instanceId;
     auto resourceAttrs = resource::Resource::Create(attrs);
 
-    // Create MeterProvider.
-    m_provider = metrics_sdk::MeterProviderFactory::Create(std::move(reader), resourceAttrs);
+    // Create MeterProvider with resource, then attach the metric reader.
+    m_provider = metrics_sdk::MeterProviderFactory::Create(
+        std::make_unique<metrics_sdk::ViewRegistry>(), resourceAttrs);
+    m_provider->AddMetricReader(std::move(reader));
 
     // Configure histogram bucket boundaries for Event instruments.
     // These match the SpanMetrics connector buckets for consistency.
     auto histogramSelector = metrics_sdk::InstrumentSelectorFactory::Create(
         metrics_sdk::InstrumentType::kHistogram, "*", "ms");
     auto meterSelector = metrics_sdk::MeterSelectorFactory::Create("rippled_metrics", "", "");
+    auto histogramConfig = std::make_shared<metrics_sdk::HistogramAggregationConfig>();
+    histogramConfig->boundaries_ =
+        std::vector<double>{1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 5000.0};
     auto histogramView = metrics_sdk::ViewFactory::Create(
         "default_histogram",
         "Default histogram view with SpanMetrics-compatible buckets",
         "ms",
         metrics_sdk::AggregationType::kHistogram,
-        std::make_shared<metrics_sdk::HistogramAggregationConfig>(
-            metrics_sdk::HistogramAggregationConfig{std::list<double>{
-                1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 5000.0}}));
+        std::move(histogramConfig));
 
     m_provider->AddView(
         std::move(histogramSelector), std::move(meterSelector), std::move(histogramView));
@@ -679,19 +684,22 @@ OTelCollectorImp::OTelCollectorImp(
     // Create the OTel Meter for creating instruments.
     m_otelMeter = m_provider->GetMeter("rippled_metrics", "1.0.0");
 
-    JLOG(m_journal.info()) << "OTelCollector started successfully";
+    if (m_journal.info)
+        m_journal.info() << "OTelCollector started successfully";
 }
 
 OTelCollectorImp::~OTelCollectorImp()
 {
-    JLOG(m_journal.info()) << "OTelCollector shutting down";
+    if (m_journal.info)
+        m_journal.info() << "OTelCollector shutting down";
     if (m_provider)
     {
         // ForceFlush to export any pending metrics before shutdown.
         m_provider->ForceFlush();
         m_provider->Shutdown();
     }
-    JLOG(m_journal.info()) << "OTelCollector stopped";
+    if (m_journal.info)
+        m_journal.info() << "OTelCollector stopped";
 }
 
 Hook
