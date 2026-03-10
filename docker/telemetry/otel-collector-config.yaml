@@ -3,7 +3,7 @@
 # Pipelines:
 #   traces: OTLP receiver -> batch processor -> debug + Jaeger + Tempo + spanmetrics
 #   metrics: OTLP receiver + spanmetrics connector -> Prometheus exporter
-#   logs:   filelog receiver -> batch processor -> Loki exporter (Phase 8)
+#   logs:   filelog receiver -> batch processor -> otlphttp/Loki (Phase 8)
 #
 # rippled sends traces via OTLP/HTTP to port 4318. The collector batches
 # them, forwards to both Jaeger and Tempo, and derives RED metrics via the
@@ -94,11 +94,11 @@ exporters:
     endpoint: tempo:4317
     tls:
       insecure: true
-  # Phase 8: Loki exporter sends parsed log entries to Grafana Loki.
-  # Uses the native loki exporter which translates OTel log records
-  # into Loki's push API format with label extraction.
-  loki:
-    endpoint: http://loki:3100/loki/api/v1/push
+  # Phase 8: Export logs to Grafana Loki via OTLP/HTTP. Loki 3.x supports
+  # native OTLP ingestion on its /otlp endpoint, replacing the removed
+  # loki exporter (dropped in otel-collector-contrib v0.147.0).
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
   prometheus:
     endpoint: 0.0.0.0:8889
 
@@ -117,4 +117,4 @@ service:
     logs:
       receivers: [filelog]
       processors: [batch]
-      exporters: [loki]
+      exporters: [otlphttp/loki]

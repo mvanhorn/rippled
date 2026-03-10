@@ -70,10 +70,11 @@ services:
       - rippled-telemetry
 
   # Phase 8: Grafana Loki for centralized log ingestion and log-trace
-  # correlation. Receives logs from OTel Collector's loki exporter.
+  # correlation. Loki 3.x supports native OTLP ingestion, so the OTel
+  # Collector exports via otlphttp to Loki's /otlp endpoint.
   # Query logs via Grafana Explore -> Loki at http://localhost:3000.
   loki:
-    image: grafana/loki:2.9.0
+    image: grafana/loki:3.4.2
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
