@@ -666,7 +666,7 @@
         "label": "Node",
         "description": "Filter by rippled node (service.instance.id)",
         "type": "query",
-        "query": "label_values(exported_instance)",
+        "query": "label_values(rippled_Peer_Finder_Active_Inbound_Peers, exported_instance)",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"

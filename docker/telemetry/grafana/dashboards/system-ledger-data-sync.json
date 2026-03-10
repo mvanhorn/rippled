@@ -501,7 +501,7 @@
         "label": "Node",
         "description": "Filter by rippled node (service.instance.id)",
         "type": "query",
-        "query": "label_values(exported_instance)",
+        "query": "label_values(rippled_ledger_data_get_Bytes_In, exported_instance)",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"

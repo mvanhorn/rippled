@@ -410,7 +410,7 @@
         "label": "Node",
         "description": "Filter by rippled node (service.instance.id)",
         "type": "query",
-        "query": "label_values(exported_instance)",
+        "query": "label_values(rippled_LedgerMaster_Validated_Ledger_Age, exported_instance)",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
