@@ -332,7 +332,7 @@ prefix=rippled
 
 Quantiles collected: 0th, 50th, 90th, 95th, 99th, 100th percentile.
 
-**Grafana dashboards**: _Node Health_ (ios*latency), *RPC & Pathfinding* (rpc_time, rpc_size, pathfind*\*)
+**Grafana dashboards**: _Node Health_ (`ios_latency`), _RPC & Pathfinding_ (`rpc_time`, `rpc_size`, `pathfind_*`)
 
 ### 2.4 Overlay Traffic Metrics
 
