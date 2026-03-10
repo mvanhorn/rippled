@@ -2,22 +2,21 @@
 #
 # Pipelines:
 #   traces: OTLP receiver -> batch processor -> debug + Jaeger + Tempo + spanmetrics
-#   metrics: spanmetrics connector + StatsD receiver -> Prometheus exporter
+#   metrics: OTLP receiver + spanmetrics connector -> Prometheus exporter
 #
 # rippled sends traces via OTLP/HTTP to port 4318. The collector batches
 # them, forwards to both Jaeger and Tempo, and derives RED metrics via the
 # spanmetrics connector, which Prometheus scrapes on port 8889.
 #
-# rippled also sends beast::insight metrics via StatsD/UDP to port 8125.
-# These are ingested by the statsd receiver and merged into the same
-# Prometheus endpoint alongside span-derived metrics.
+# rippled sends beast::insight metrics natively via OTLP/HTTP to port 4318
+# (same endpoint as traces). The OTLP receiver feeds both the traces and
+# metrics pipelines. Metrics are exported to Prometheus alongside
+# span-derived metrics.
 #
-# TODO: The Resource Manager's "warn" and "drop" metrics use the non-standard
-# "|m" (meter) StatsD type in StatsDCollector.cpp:706. The OTel StatsD
-# receiver silently drops "|m" metrics since it only recognizes standard
-# types (|c, |g, |ms, |h, |s). To capture these two metrics, change "|m"
-# to "|c" in StatsDCollector.cpp — this is a breaking change for any
-# backend that relied on the custom "|m" type. Tracked as Phase 6 Task 6.1.
+# For backward compatibility, the StatsD receiver config is preserved below
+# but commented out. If you need StatsD fallback (server=statsd in
+# [insight]), uncomment the statsd receiver and add it to the metrics
+# pipeline receivers list.
 
 receivers:
   otlp:
@@ -26,20 +25,22 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  statsd:
-    endpoint: "0.0.0.0:8125"
-    aggregation_interval: 15s
-    enable_metric_type: true
-    is_monotonic_counter: true
-    timer_histogram_mapping:
-      - statsd_type: "timing"
-        observer_type: "summary"
-        summary:
-          percentiles: [0, 50, 90, 95, 99, 100]
-      - statsd_type: "histogram"
-        observer_type: "summary"
-        summary:
-          percentiles: [0, 50, 90, 95, 99, 100]
+  # StatsD receiver — kept for backward compatibility with server=statsd.
+  # Uncomment and add "statsd" to metrics pipeline receivers if needed.
+  # statsd:
+  #   endpoint: "0.0.0.0:8125"
+  #   aggregation_interval: 15s
+  #   enable_metric_type: true
+  #   is_monotonic_counter: true
+  #   timer_histogram_mapping:
+  #     - statsd_type: "timing"
+  #       observer_type: "summary"
+  #       summary:
+  #         percentiles: [0, 50, 90, 95, 99, 100]
+  #     - statsd_type: "histogram"
+  #       observer_type: "summary"
+  #       summary:
+  #         percentiles: [0, 50, 90, 95, 99, 100]
 
 processors:
   batch:
@@ -84,5 +85,6 @@ service:
       processors: [batch]
       exporters: [debug, otlp/jaeger, otlp/tempo, spanmetrics]
     metrics:
-      receivers: [spanmetrics, statsd]
+      receivers: [otlp, spanmetrics]
+      processors: [batch]
       exporters: [prometheus]

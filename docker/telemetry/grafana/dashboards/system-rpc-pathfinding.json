@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "RPC and pathfinding metrics from beast::insight StatsD. Requires [insight] server=statsd in rippled config.",
+  "description": "RPC and pathfinding metrics from beast::insight System Metrics. Requires [insight] server=otel in rippled config.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -10,7 +10,7 @@
   "links": [],
   "panels": [
     {
-      "title": "RPC Request Rate (StatsD)",
+      "title": "RPC Request Rate (System Metrics)",
       "description": "Rate of RPC requests as counted by the beast::insight counter. Sourced from rpc.requests (ServerHandler.cpp:108) which increments on every HTTP and WebSocket RPC request. Compare with the span-based rpc.request rate in the RPC Performance dashboard for cross-validation.",
       "type": "stat",
       "gridPos": {
@@ -42,7 +42,7 @@
       }
     },
     {
-      "title": "RPC Response Time (StatsD)",
+      "title": "RPC Response Time (System Metrics)",
       "description": "P95 and P50 of RPC response time from the beast::insight timer. Sourced from the rpc.time event (ServerHandler.cpp:110) which records elapsed milliseconds for each RPC response. This measures the full HTTP handler time, not just command execution. Compare with span-based rpc.request duration.",
       "type": "timeseries",
       "gridPos": {
@@ -287,7 +287,7 @@
     },
     {
       "title": "Resource Warnings Rate",
-      "description": "Rate of resource warning events from the Resource Manager. Sourced from the warn meter (Logic.h:33) which increments when a consumer (peer or RPC client) exceeds the warning threshold for resource usage. A rising rate indicates aggressive clients that may need throttling. NOTE: This panel will show no data until the |m -> |c fix is applied in StatsDCollector.cpp:706 (Phase 6 Task 6.1).",
+      "description": "Rate of resource warning events from the Resource Manager. Sourced from the warn meter (Logic.h:33) which increments when a consumer (peer or RPC client) exceeds the warning threshold for resource usage. A rising rate indicates aggressive clients that may need throttling. NOTE: This panel will show no data until the |m -> |c fix is applied in System MetricsCollector.cpp:706 (Phase 6 Task 6.1).",
       "type": "stat",
       "gridPos": {
         "h": 8,
@@ -335,7 +335,7 @@
     },
     {
       "title": "Resource Drops Rate",
-      "description": "Rate of resource drop events from the Resource Manager. Sourced from the drop meter (Logic.h:34) which increments when a consumer is disconnected or blocked due to excessive resource usage. Non-zero values mean the node is actively rejecting abusive connections. NOTE: This panel will show no data until the |m -> |c fix is applied in StatsDCollector.cpp:706 (Phase 6 Task 6.1).",
+      "description": "Rate of resource drop events from the Resource Manager. Sourced from the drop meter (Logic.h:34) which increments when a consumer is disconnected or blocked due to excessive resource usage. Non-zero values mean the node is actively rejecting abusive connections. NOTE: This panel will show no data until the |m -> |c fix is applied in System MetricsCollector.cpp:706 (Phase 6 Task 6.1).",
       "type": "stat",
       "gridPos": {
         "h": 8,
@@ -391,6 +391,6 @@
     "from": "now-1h",
     "to": "now"
   },
-  "title": "RPC & Pathfinding (StatsD)",
-  "uid": "rippled-statsd-rpc"
+  "title": "RPC & Pathfinding (System Metrics)",
+  "uid": "rippled-system-rpc"
 }

@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Node health metrics from beast::insight StatsD. Requires [insight] server=statsd in rippled config.",
+  "description": "Node health metrics from beast::insight System Metrics. Requires [insight] server=otel in rippled config.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -410,6 +410,6 @@
     "from": "now-1h",
     "to": "now"
   },
-  "title": "Node Health (StatsD)",
-  "uid": "rippled-statsd-node-health"
+  "title": "Node Health (System Metrics)",
+  "uid": "rippled-system-node-health"
 }

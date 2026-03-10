@@ -23,6 +23,17 @@ public:
 
             m_collector = beast::insight::StatsDCollector::New(address, prefix, journal);
         }
+        else if (server == "otel")
+        {
+            // Read OTLP metrics endpoint from [insight] section.
+            // Default to the standard OTLP/HTTP metrics path on localhost.
+            std::string endpoint = get(params, "endpoint");
+            if (endpoint.empty())
+                endpoint = "http://localhost:4318/v1/metrics";
+            std::string const& prefix(get(params, "prefix"));
+
+            m_collector = beast::insight::OTelCollector::New(endpoint, prefix, journal);
+        }
         else
         {
             m_collector = beast::insight::NullCollector::New();

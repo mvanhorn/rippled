@@ -444,21 +444,21 @@ curl -s "$PROM/api/v1/query?query=traces_span_metrics_calls_total{span_name=~\"r
   | jq '.data.result[] | {command: .metric["xrpl.rpc.command"], count: .value[1]}'
 ```
 
-### StatsD Metrics (beast::insight)
+### System Metrics (beast::insight via OTel native)
 
-rippled's built-in `beast::insight` framework emits StatsD metrics over UDP to the OTel Collector
-on port 8125. These appear in Prometheus alongside spanmetrics.
+rippled's built-in `beast::insight` framework exports metrics natively via OTLP/HTTP to the OTel Collector
+on port 4318 (same endpoint as traces). These appear in Prometheus alongside spanmetrics.
 
 Requires `[insight]` config in `xrpld.cfg`:
 
 ```ini
 [insight]
-server=statsd
-address=127.0.0.1:8125
+server=otel
+endpoint=http://localhost:4318/v1/metrics
 prefix=rippled
 ```
 
-Verify StatsD metrics in Prometheus:
+Verify system metrics in Prometheus:
 
 ```bash
 # Ledger age gauge
@@ -477,7 +477,7 @@ curl -s "$PROM/api/v1/query?query=rippled_State_Accounting_Full_duration" | jq '
 curl -s "$PROM/api/v1/query?query=rippled_total_Bytes_In" | jq '.data.result'
 ```
 
-Key StatsD metrics (prefix `rippled_`):
+Key system metrics (prefix `rippled_`):
 
 | Metric                                | Type      | Source                                    |
 | ------------------------------------- | --------- | ----------------------------------------- |
@@ -514,11 +514,11 @@ Pre-configured dashboards (span-derived):
 - **Ledger Operations**: Build/validate/store rates and durations, TX apply metrics
 - **Peer Network**: Proposal/validation receive rates, trusted vs untrusted breakdown (requires `trace_peer=1`)
 
-Pre-configured dashboards (StatsD):
+Pre-configured dashboards (system metrics):
 
-- **Node Health (StatsD)**: Validated/published ledger age, operating mode, I/O latency, job queue
-- **Network Traffic (StatsD)**: Peer counts, disconnects, overlay traffic by category
-- **RPC & Pathfinding (StatsD)**: RPC request rate/time/size, pathfinding duration, resource warnings
+- **Node Health (System Metrics)**: Validated/published ledger age, operating mode, I/O latency, job queue
+- **Network Traffic (System Metrics)**: Peer counts, disconnects, overlay traffic by category
+- **RPC & Pathfinding (System Metrics)**: RPC request rate/time/size, pathfinding duration, resource warnings
 
 Pre-configured datasources:
 
@@ -575,7 +575,7 @@ Pre-configured datasources:
    service:
      pipelines:
        metrics:
-         receivers: [spanmetrics]
+         receivers: [otlp, spanmetrics]
          exporters: [prometheus]
    ```
 3. Verify Prometheus can reach collector:

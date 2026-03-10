@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Detailed overlay traffic breakdown for categories not covered by the main Network Traffic dashboard. Includes squelch, overhead, validator lists, object fetch, ledger sync, and protocol negotiation traffic. Requires [insight] server=statsd in rippled config.",
+  "description": "Detailed overlay traffic breakdown for categories not covered by the main Network Traffic dashboard. Includes squelch, overhead, validator lists, object fetch, ledger sync, and protocol negotiation traffic. Requires [insight] server=otel in rippled config.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -561,6 +561,6 @@
     "from": "now-1h",
     "to": "now"
   },
-  "title": "Overlay Traffic Detail (StatsD)",
-  "uid": "rippled-statsd-overlay-detail"
+  "title": "Overlay Traffic Detail (System Metrics)",
+  "uid": "rippled-system-overlay-detail"
 }

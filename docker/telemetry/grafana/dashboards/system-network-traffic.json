@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Network traffic and peer metrics from beast::insight StatsD. Requires [insight] server=statsd in rippled config.",
+  "description": "Network traffic and peer metrics from beast::insight System Metrics. Requires [insight] server=otel in rippled config.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -666,6 +666,6 @@
     "from": "now-1h",
     "to": "now"
   },
-  "title": "Network Traffic (StatsD)",
-  "uid": "rippled-statsd-network"
+  "title": "Network Traffic (System Metrics)",
+  "uid": "rippled-system-network"
 }

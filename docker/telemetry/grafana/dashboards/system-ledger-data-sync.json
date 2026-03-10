@@ -2,7 +2,7 @@
   "annotations": {
     "list": []
   },
-  "description": "Ledger data exchange and object fetch traffic from beast::insight StatsD. Covers ledger sync, node data retrieval, and transaction set exchange. Requires [insight] server=statsd in rippled config.",
+  "description": "Ledger data exchange and object fetch traffic from beast::insight System Metrics. Covers ledger sync, node data retrieval, and transaction set exchange. Requires [insight] server=otel in rippled config.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -501,6 +501,6 @@
     "from": "now-1h",
     "to": "now"
   },
-  "title": "Ledger Data & Sync (StatsD)",
-  "uid": "rippled-statsd-ledger-sync"
+  "title": "Ledger Data & Sync (System Metrics)",
+  "uid": "rippled-system-ledger-sync"
 }
