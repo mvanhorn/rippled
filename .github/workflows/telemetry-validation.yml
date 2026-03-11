@@ -95,8 +95,16 @@ jobs:
 
       - name: Build rippled with telemetry
         run: |
-          conan install . --build=missing --profile ci --output-folder=build
-          cmake -B build -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -Dtelemetry=ON
+          conan install . \
+            --profile ci \
+            --build=missing \
+            --settings:all build_type=Release
+          cmake \
+            -B build \
+            -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -Dtelemetry=ON
           cmake --build build --parallel $(nproc)
 
       - name: Make scripts executable
