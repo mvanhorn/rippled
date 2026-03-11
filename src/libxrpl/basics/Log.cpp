@@ -366,9 +366,9 @@ Logs::format(
         {
             // Append trace context as structured key=value fields that the
             // OTel Collector filelog receiver regex_parser can extract.
-            char traceId[33], spanId[17];
-            ctx.trace_id().ToLowerBase16(traceId);
-            ctx.span_id().ToLowerBase16(spanId);
+            char traceId[32], spanId[16];
+            ctx.trace_id().ToLowerBase16(opentelemetry::nostd::span<char, 32>{traceId});
+            ctx.span_id().ToLowerBase16(opentelemetry::nostd::span<char, 16>{spanId});
             output += "trace_id=";
             output.append(traceId, 32);
             output += " span_id=";
