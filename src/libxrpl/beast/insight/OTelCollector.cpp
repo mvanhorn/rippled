@@ -631,7 +631,7 @@ OTelCollectorImp::OTelCollectorImp(
     Journal journal)
     : m_journal(journal), m_prefix(prefix)
 {
-    if (m_journal.info)
+    if (m_journal.info())
         m_journal.info() << "OTelCollector starting: endpoint=" << endpoint
                          << " prefix=" << m_prefix;
 
@@ -684,13 +684,13 @@ OTelCollectorImp::OTelCollectorImp(
     // Create the OTel Meter for creating instruments.
     m_otelMeter = m_provider->GetMeter("rippled_metrics", "1.0.0");
 
-    if (m_journal.info)
+    if (m_journal.info())
         m_journal.info() << "OTelCollector started successfully";
 }
 
 OTelCollectorImp::~OTelCollectorImp()
 {
-    if (m_journal.info)
+    if (m_journal.info())
         m_journal.info() << "OTelCollector shutting down";
     if (m_provider)
     {
@@ -698,7 +698,7 @@ OTelCollectorImp::~OTelCollectorImp()
         m_provider->ForceFlush();
         m_provider->Shutdown();
     }
-    if (m_journal.info)
+    if (m_journal.info())
         m_journal.info() << "OTelCollector stopped";
 }
 
