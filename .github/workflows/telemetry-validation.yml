@@ -10,6 +10,11 @@
 # The workflow is intentionally heavyweight (builds rippled, starts Docker
 # services, runs a multi-node cluster) — it validates the full telemetry
 # stack end-to-end rather than individual unit tests.
+#
+# The build steps mirror the main CI pipeline (reusable-build-test-config.yml):
+#   - setup-conan action → build-deps action → cmake configure → cmake build
+# This ensures dependency resolution, toolchain generation, and compiler
+# flags are identical to what the PR workflow uses.
 
 name: Telemetry Validation
 
@@ -52,18 +57,14 @@ concurrency:
   group: telemetry-validation-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  BUILD_DIR: build
+
 jobs:
   validate-telemetry:
     name: Telemetry Stack Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    services:
-      # Docker-in-Docker not needed — we use docker compose directly.
-      # The runner has Docker pre-installed.
-      docker:
-        image: docker:dind
-        options: --privileged
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
@@ -72,7 +73,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq bc python3 python3-pip
+          sudo apt-get install -y curl jq bc python3 python3-pip ninja-build
 
       - name: Install Python dependencies
         run: pip3 install -r docker/telemetry/workload/requirements.txt
@@ -80,43 +81,58 @@ jobs:
       - name: Install Conan
         run: pip3 install conan
 
+      # ── Build steps (mirrors main CI: setup-conan → build-deps → cmake) ──
+
       - name: Set up Conan
         uses: ./.github/actions/setup-conan
 
-      - name: Cache Conan packages and build directory
+      - name: Cache Conan packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.conan2/p
-            .build
-          key: telemetry-build-${{ runner.os }}-${{ hashFiles('conanfile.py', 'CMakeLists.txt') }}
+          path: ~/.conan2/p
+          key: telemetry-conan-${{ runner.os }}-${{ hashFiles('conanfile.py') }}
           restore-keys: |
-            telemetry-build-${{ runner.os }}-
+            telemetry-conan-${{ runner.os }}-
 
-      - name: Build rippled with telemetry
+      # Use the same build-deps action as the main CI pipeline.
+      # This runs conan install with --options:host='&:xrpld=True' which
+      # sets xrpld=ON and telemetry=True (default) in the generated
+      # CMake toolchain — no manual -D flags needed.
+      - name: Build dependencies
+        uses: ./.github/actions/build-deps
+        with:
+          build_nproc: 4
+          build_type: Release
+
+      - name: Configure CMake
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
-          conan install . \
-            --profile ci \
-            --build=missing \
-            --settings:all build_type=Release
           cmake \
-            -B build \
             -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
-            -Dtelemetry=ON
-          cmake --build build --target xrpld --parallel $(nproc)
+            ..
+
+      - name: Build xrpld
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          cmake \
+            --build . \
+            --config Release \
+            --parallel $(nproc) \
+            --target xrpld
+
+      # ── Telemetry validation steps ──
 
       - name: Make scripts executable
-        run: |
-          chmod +x docker/telemetry/workload/*.sh
+        run: chmod +x docker/telemetry/workload/*.sh
 
       - name: Run full telemetry validation
         id: validation
         env:
-          XRPLD: build/xrpld
+          XRPLD: ${{ env.BUILD_DIR }}/xrpld
         run: |
-          ARGS="--xrpld build/xrpld --skip-loki"
+          ARGS="--xrpld ${{ env.BUILD_DIR }}/xrpld --skip-loki"
           ARGS="$ARGS --rpc-rate ${{ github.event.inputs.rpc_rate || '50' }}"
           ARGS="$ARGS --rpc-duration ${{ github.event.inputs.rpc_duration || '120' }}"
           ARGS="$ARGS --tx-tps ${{ github.event.inputs.tx_tps || '5' }}"
