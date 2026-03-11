@@ -32,7 +32,6 @@
 #include <opentelemetry/sdk/metrics/meter_provider.h>
 #include <opentelemetry/sdk/metrics/meter_provider_factory.h>
 
-namespace metric_api = opentelemetry::metrics;
 namespace metric_sdk = opentelemetry::sdk::metrics;
 namespace otlp_http = opentelemetry::exporter::otlp;
 
@@ -290,7 +289,7 @@ MetricsRegistry::registerAsyncGauges()
                     opentelemetry::metrics::ObserverResultT<double>>>(result)
                     ->Observe(static_cast<double>(fbSize), {{"metric", "fullbelow_size"}});
             }
-            catch (...)
+            catch (...)  // NOLINT(bugprone-empty-catch)
             {
                 // Silently skip if services are not yet ready.
             }
@@ -331,7 +330,7 @@ MetricsRegistry::registerAsyncGauges()
                     "txq_open_ledger_fee_level",
                     static_cast<double>(metrics.openLedgerFeeLevel.fee()));
             }
-            catch (...)
+            catch (...)  // NOLINT(bugprone-empty-catch)
             {
                 // Silently skip if TxQ or OpenLedger are not yet ready.
             }
@@ -356,7 +355,7 @@ MetricsRegistry::registerAsyncGauges()
                         ->Observe(static_cast<int64_t>(count), {{"type", name}});
                 }
             }
-            catch (...)
+            catch (...)  // NOLINT(bugprone-empty-catch)
             {
                 // Silently skip on error.
             }
@@ -422,7 +421,7 @@ MetricsRegistry::registerAsyncGauges()
                 }
                 observe("load_factor", combined);
             }
-            catch (...)
+            catch (...)  // NOLINT(bugprone-empty-catch)
             {
                 // Silently skip if services are not yet ready.
             }
@@ -469,7 +468,7 @@ MetricsRegistry::registerAsyncGauges()
                     observe("read_queue", static_cast<int64_t>(obj["read_queue"].asUInt()));
                 }
             }
-            catch (...)
+            catch (...)  // NOLINT(bugprone-empty-catch)
             {
                 // Silently skip on error.
             }
