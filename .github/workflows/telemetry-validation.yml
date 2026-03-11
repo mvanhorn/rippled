@@ -105,7 +105,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -Dtelemetry=ON
-          cmake --build build --parallel $(nproc)
+          cmake --build build --target xrpld --parallel $(nproc)
 
       - name: Make scripts executable
         run: |
