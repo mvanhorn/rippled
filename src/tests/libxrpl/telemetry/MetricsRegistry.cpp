@@ -1,38 +1,41 @@
-/** Unit tests for MetricsRegistry.
-
-    Tests cover:
-    - Construction with telemetry disabled (no-op behavior).
-    - start()/stop() lifecycle when disabled.
-    - Synchronous instrument recording methods do not crash when disabled.
-    - Double stop() is safe.
-
-    NOTE: Tests that exercise the OTel SDK path require XRPL_ENABLE_TELEMETRY
-    to be defined at build time (telemetry=ON). The no-op path tests run
-    unconditionally.
-*/
+/** GTest unit tests for MetricsRegistry (no-op / telemetry-disabled path).
+ *
+ *  Tests cover:
+ *  - Construction with telemetry disabled (no-op behavior).
+ *  - start()/stop() lifecycle when disabled.
+ *  - Synchronous instrument recording methods do not crash when disabled.
+ *  - Double stop() is safe.
+ *  - Destructor handles cleanup without crash.
+ *
+ *  NOTE: Tests that exercise the OTel SDK path require XRPL_ENABLE_TELEMETRY
+ *  to be defined at build time (telemetry=ON). The no-op path tests run
+ *  unconditionally.
+ */
 
 #include <xrpld/telemetry/MetricsRegistry.h>
 
-#include <xrpl/beast/unit_test.h>
 #include <xrpl/core/ServiceRegistry.h>
 
-namespace xrpl {
-namespace test {
+#include <gtest/gtest.h>
+
+using namespace xrpl;
+
+namespace {
 
 /** Minimal mock ServiceRegistry for MetricsRegistry testing.
-
-    Only the getMetricsRegistry() call is used in the tests; other methods
-    are not invoked because the registry is disabled (enabled=false) so no
-    gauge callbacks execute.
-
-    All pure virtual methods throw to catch accidental calls during tests.
-*/
+ *
+ *  Only the getMetricsRegistry() call is used in the tests; other methods
+ *  are not invoked because the registry is disabled (enabled=false) so no
+ *  gauge callbacks execute.
+ *
+ *  All pure virtual methods throw to catch accidental calls during tests.
+ */
 class MockServiceRegistry : public ServiceRegistry
 {
     [[noreturn]] void
     throwUnimplemented() const
     {
-        Throw<std::logic_error>("MockServiceRegistry: method not implemented");
+        throw std::logic_error("MockServiceRegistry: method not implemented");
     }
 
 public:
@@ -280,95 +283,57 @@ public:
     }
 };
 
-class MetricsRegistry_test : public beast::unit_test::suite
+/// Test fixture that provides a MockServiceRegistry and null Journal.
+class MetricsRegistryTest : public ::testing::Test
 {
-    void
-    testDisabledConstruction()
-    {
-        testcase("Disabled construction");
-
-        MockServiceRegistry mockApp;
-        beast::Journal j(beast::Journal::getNullSink());
-
-        // Construct with enabled=false; should be a no-op.
-        telemetry::MetricsRegistry registry(false, mockApp, j);
-        BEAST_EXPECT(!registry.isEnabled());
-    }
-
-    void
-    testDisabledStartStop()
-    {
-        testcase("Disabled start/stop");
-
-        MockServiceRegistry mockApp;
-        beast::Journal j(beast::Journal::getNullSink());
-
-        telemetry::MetricsRegistry registry(false, mockApp, j);
-
-        // start() and stop() should be no-ops when disabled.
-        registry.start("http://localhost:4318/v1/metrics");
-        registry.stop();
-
-        // Double stop should be safe.
-        registry.stop();
-
-        pass();
-    }
-
-    void
-    testDisabledRecording()
-    {
-        testcase("Disabled recording methods");
-
-        MockServiceRegistry mockApp;
-        beast::Journal j(beast::Journal::getNullSink());
-
-        telemetry::MetricsRegistry registry(false, mockApp, j);
-        registry.start("http://localhost:4318/v1/metrics");
-
-        // All recording methods should be no-ops (not crash).
-        registry.recordRpcStarted("server_info");
-        registry.recordRpcFinished("server_info", 1000);
-        registry.recordRpcErrored("ledger", 500);
-        registry.recordJobQueued("ledgerData");
-        registry.recordJobStarted("ledgerData", 200);
-        registry.recordJobFinished("ledgerData", 3000);
-
-        registry.stop();
-
-        pass();
-    }
-
-    void
-    testDestructorStops()
-    {
-        testcase("Destructor calls stop");
-
-        MockServiceRegistry mockApp;
-        beast::Journal j(beast::Journal::getNullSink());
-
-        {
-            // Let the destructor handle cleanup.
-            telemetry::MetricsRegistry registry(false, mockApp, j);
-            registry.start("http://localhost:4318/v1/metrics");
-        }
-
-        // If we get here without crash, the destructor handled stop.
-        pass();
-    }
-
-public:
-    void
-    run() override
-    {
-        testDisabledConstruction();
-        testDisabledStartStop();
-        testDisabledRecording();
-        testDestructorStops();
-    }
+protected:
+    MockServiceRegistry mockApp_;
+    beast::Journal j_{beast::Journal::getNullSink()};
 };
 
-BEAST_DEFINE_TESTSUITE(MetricsRegistry, telemetry, xrpl);
+}  // namespace
 
-}  // namespace test
-}  // namespace xrpl
+TEST_F(MetricsRegistryTest, disabled_construction)
+{
+    // Construct with enabled=false; should be a no-op.
+    telemetry::MetricsRegistry registry(false, mockApp_, j_);
+    EXPECT_FALSE(registry.isEnabled());
+}
+
+TEST_F(MetricsRegistryTest, disabled_start_stop)
+{
+    telemetry::MetricsRegistry registry(false, mockApp_, j_);
+
+    // start() and stop() should be no-ops when disabled.
+    registry.start("http://localhost:4318/v1/metrics");
+    registry.stop();
+
+    // Double stop should be safe.
+    registry.stop();
+}
+
+TEST_F(MetricsRegistryTest, disabled_recording_methods)
+{
+    telemetry::MetricsRegistry registry(false, mockApp_, j_);
+    registry.start("http://localhost:4318/v1/metrics");
+
+    // All recording methods should be no-ops (not crash).
+    registry.recordRpcStarted("server_info");
+    registry.recordRpcFinished("server_info", 1000);
+    registry.recordRpcErrored("ledger", 500);
+    registry.recordJobQueued("ledgerData");
+    registry.recordJobStarted("ledgerData", 200);
+    registry.recordJobFinished("ledgerData", 3000);
+
+    registry.stop();
+}
+
+TEST_F(MetricsRegistryTest, destructor_calls_stop)
+{
+    {
+        // Let the destructor handle cleanup.
+        telemetry::MetricsRegistry registry(false, mockApp_, j_);
+        registry.start("http://localhost:4318/v1/metrics");
+    }
+    // If we get here without crash, the destructor handled stop.
+}

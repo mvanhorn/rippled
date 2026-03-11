@@ -39,7 +39,12 @@ if(NOT WIN32)
     add_dependencies(xrpl.tests xrpl.test.net)
 endif()
 
-xrpl_add_test(telemetry)
+xrpl_add_test(
+    telemetry
+    # MetricsRegistry lives in xrpld; compile its .cpp directly into the test
+    # target so the no-op path can be tested without linking all of xrpld.
+    ${CMAKE_SOURCE_DIR}/src/xrpld/telemetry/MetricsRegistry.cpp
+)
 target_link_libraries(xrpl.test.telemetry PRIVATE xrpl.imports.test)
 target_include_directories(xrpl.test.telemetry PRIVATE ${CMAKE_SOURCE_DIR}/src)
 if(telemetry)
