@@ -7,10 +7,15 @@
  *  - Double stop() is safe.
  *  - Destructor handles cleanup without crash.
  *
- *  NOTE: Tests that exercise the OTel SDK path require XRPL_ENABLE_TELEMETRY
- *  to be defined at build time (telemetry=ON). The no-op path tests run
- *  unconditionally.
+ *  NOTE: These tests only exercise the no-op path (telemetry disabled).
+ *  When XRPL_ENABLE_TELEMETRY is defined, MetricsRegistry.cpp pulls in
+ *  xrpld symbols that cannot be linked into this standalone test binary,
+ *  so the tests are compiled out.
  */
+
+// When telemetry is globally enabled, MetricsRegistry.cpp requires xrpld
+// link dependencies we cannot satisfy in a standalone GTest binary.
+#ifndef XRPL_ENABLE_TELEMETRY
 
 #include <xrpld/telemetry/MetricsRegistry.h>
 
@@ -337,3 +342,5 @@ TEST_F(MetricsRegistryTest, destructor_calls_stop)
     }
     // If we get here without crash, the destructor handled stop.
 }
+
+#endif  // !XRPL_ENABLE_TELEMETRY
