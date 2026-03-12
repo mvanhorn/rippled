@@ -185,6 +185,10 @@ jobs:
             ARGS="$ARGS --with-benchmark"
           fi
           docker/telemetry/workload/run-full-validation.sh $ARGS
+        # continue-on-error allows subsequent steps (artifact upload,
+        # summary printing) to run even if validation fails. The final
+        # "Check validation result" step re-checks steps.validation.outcome
+        # (the pre-continue-on-error result) and fails the job properly.
         continue-on-error: true
 
       - name: Upload validation reports

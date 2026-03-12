@@ -2,7 +2,7 @@
 #
 # Pipelines:
 #   traces: OTLP receiver -> batch processor -> debug + Jaeger + Tempo + spanmetrics
-#   metrics: OTLP receiver + spanmetrics connector -> Prometheus exporter
+#   metrics: OTLP + StatsD receivers + spanmetrics connector -> Prometheus exporter
 #   logs:   filelog receiver -> batch processor -> otlphttp/Loki (Phase 8)
 #
 # rippled sends traces via OTLP/HTTP to port 4318. The collector batches
@@ -14,10 +14,8 @@
 # metrics pipelines. Metrics are exported to Prometheus alongside
 # span-derived metrics.
 #
-# For backward compatibility, the StatsD receiver config is preserved below
-# but commented out. If you need StatsD fallback (server=statsd in
-# [insight]), uncomment the statsd receiver and add it to the metrics
-# pipeline receivers list.
+# The StatsD receiver accepts beast::insight metrics from xrpld nodes
+# configured with server=statsd in [insight]. It listens on UDP port 8125.
 #
 # Phase 8: The filelog receiver tails rippled's debug.log files under
 # /var/log/rippled/ (mounted from the host). A regex_parser operator
