@@ -9,6 +9,16 @@
     - No-op stubs when XRPL_ENABLE_TELEMETRY is not defined.
 */
 
+// On Windows, OTel's spin_lock_mutex.h (transitively included from
+// MetricsRegistry.h) defines _WINSOCKAPI_ and includes <windows.h>.
+// This poisons the include state for boost/asio/detail/socket_types.hpp,
+// which requires winsock2.h to be included first.  Pre-including the
+// boost/asio socket types header gets winsock2.h in before the OTel
+// headers can interfere.
+#ifdef _MSC_VER
+#include <boost/asio/detail/socket_types.hpp>
+#endif
+
 #include <xrpld/telemetry/MetricsRegistry.h>
 
 #ifdef XRPL_ENABLE_TELEMETRY
