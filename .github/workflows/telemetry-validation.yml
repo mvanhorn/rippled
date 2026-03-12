@@ -86,8 +86,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl jq bc ninja-build ccache
 
-      - name: Install Python dependencies
-        run: pip3 install -r docker/telemetry/workload/requirements.txt
+      - name: Install Conan and Python dependencies
+        run: |
+          pip3 install conan
+          pip3 install -r docker/telemetry/workload/requirements.txt
 
       - name: Print build environment
         uses: ./.github/actions/print-env
