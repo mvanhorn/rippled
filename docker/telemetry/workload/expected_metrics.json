@@ -91,11 +91,11 @@
       "rippled-consensus",
       "rippled-ledger-ops",
       "rippled-peer-net",
-      "rippled-statsd-node-health",
-      "rippled-statsd-network",
-      "rippled-statsd-rpc",
-      "rippled-statsd-overlay-detail",
-      "rippled-statsd-ledger-sync"
+      "rippled-system-node-health",
+      "rippled-system-network",
+      "rippled-system-rpc",
+      "rippled-system-overlay-detail",
+      "rippled-system-ledger-sync"
     ]
   }
 }

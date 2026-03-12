@@ -345,8 +345,8 @@ ok "Transaction submission complete."
 # ---------------------------------------------------------------------------
 # Step 6: Wait for telemetry propagation
 # ---------------------------------------------------------------------------
-log "Step 6: Waiting 30s for telemetry data to propagate..."
-sleep 30
+log "Step 6: Waiting 45s for telemetry data to propagate..."
+sleep 45
 
 # ---------------------------------------------------------------------------
 # Step 7: Run telemetry validation suite

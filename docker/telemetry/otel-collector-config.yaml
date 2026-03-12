@@ -36,22 +36,22 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  # StatsD receiver — kept for backward compatibility with server=statsd.
-  # Uncomment and add "statsd" to metrics pipeline receivers if needed.
-  # statsd:
-  #   endpoint: "0.0.0.0:8125"
-  #   aggregation_interval: 15s
-  #   enable_metric_type: true
-  #   is_monotonic_counter: true
-  #   timer_histogram_mapping:
-  #     - statsd_type: "timing"
-  #       observer_type: "summary"
-  #       summary:
-  #         percentiles: [0, 50, 90, 95, 99, 100]
-  #     - statsd_type: "histogram"
-  #       observer_type: "summary"
-  #       summary:
-  #         percentiles: [0, 50, 90, 95, 99, 100]
+  # StatsD receiver — accepts beast::insight metrics from xrpld nodes
+  # configured with server=statsd in [insight]. Listens on UDP port 8125.
+  statsd:
+    endpoint: "0.0.0.0:8125"
+    aggregation_interval: 15s
+    enable_metric_type: true
+    is_monotonic_counter: true
+    timer_histogram_mapping:
+      - statsd_type: "timing"
+        observer_type: "summary"
+        summary:
+          percentiles: [0, 50, 90, 95, 99, 100]
+      - statsd_type: "histogram"
+        observer_type: "summary"
+        summary:
+          percentiles: [0, 50, 90, 95, 99, 100]
   # Phase 8: Filelog receiver tails rippled debug.log files for log-trace
   # correlation. Extracts structured fields (timestamp, partition, severity,
   # trace_id, span_id, message) via regex. The trace_id and span_id are
@@ -114,7 +114,7 @@ service:
       processors: [batch]
       exporters: [debug, otlp/jaeger, otlp/tempo, spanmetrics]
     metrics:
-      receivers: [otlp, spanmetrics]
+      receivers: [otlp, spanmetrics, statsd]
       processors: [batch]
       exporters: [prometheus]
     # Phase 8: Log pipeline ingests rippled debug.log via filelog receiver,
