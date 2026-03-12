@@ -357,6 +357,7 @@ Logs::format(
         // Phase 8: Inject OTel trace context (trace_id, span_id) into log lines
         // for log-trace correlation. Only appended when an active span exists.
         // GetSpan() reads thread-local storage — no locks, <10ns overhead.
+// LCOV_EXCL_START -- compiled out when XRPL_ENABLE_TELEMETRY is not defined
 #ifdef XRPL_ENABLE_TELEMETRY
     {
         auto span =
@@ -377,6 +378,7 @@ Logs::format(
         }
     }
 #endif  // XRPL_ENABLE_TELEMETRY
+    // LCOV_EXCL_STOP
 
     output += message;
 
