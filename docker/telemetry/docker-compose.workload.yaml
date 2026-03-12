@@ -39,6 +39,8 @@ services:
       - "13133:13133" # Health check
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      # Mount the validation workdir so filelog receiver can tail node logs.
+      - /tmp/xrpld-validation:/var/log/rippled:ro
     depends_on:
       - jaeger
       - tempo
@@ -94,7 +96,7 @@ services:
       retries: 10
 
   loki:
-    image: grafana/loki:2.9.4
+    image: grafana/loki:3.4.2
     ports:
       - "3100:3100" # Loki HTTP API
     command: ["-config.file=/etc/loki/local-config.yaml"]
