@@ -28,7 +28,7 @@ buildLedgerImpl(
     beast::Journal j,
     ApplyTxs&& applyTxs)
 {
-    XRPL_TRACE_LEDGER(app.getTelemetry(), "ledger.build");
+    XRPL_TRACE_LEDGER(app.getTelemetry(), "ledger.build");  // LCOV_EXCL_LINE
 
     auto built = std::make_shared<Ledger>(*parent, closeTime);
 
@@ -63,7 +63,8 @@ buildLedgerImpl(
         built->header().seq < XRP_LEDGER_EARLIEST_FEES || built->read(keylet::fees()),
         "xrpl::buildLedgerImpl : valid ledger fees");
     built->setAccepted(closeTime, closeResolution, closeTimeCorrect);
-    XRPL_TRACE_SET_ATTR("xrpl.ledger.seq", static_cast<int64_t>(built->header().seq));
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.ledger.seq", static_cast<int64_t>(built->header().seq));  // LCOV_EXCL_LINE
 
     return built;
 }
@@ -87,7 +88,7 @@ applyTransactions(
     OpenView& view,
     beast::Journal j)
 {
-    XRPL_TRACE_TX(app.getTelemetry(), "tx.apply");
+    XRPL_TRACE_TX(app.getTelemetry(), "tx.apply");  // LCOV_EXCL_LINE
 
     bool certainRetry = true;
     std::size_t count = 0;
@@ -155,8 +156,9 @@ applyTransactions(
     // If there are any transactions left, we must have
     // tried them in at least one final pass
     XRPL_ASSERT(txns.empty() || !certainRetry, "xrpl::applyTransactions : retry transactions");
-    XRPL_TRACE_SET_ATTR("xrpl.ledger.tx_count", static_cast<int64_t>(count));
-    XRPL_TRACE_SET_ATTR("xrpl.ledger.tx_failed", static_cast<int64_t>(failed.size()));
+    XRPL_TRACE_SET_ATTR("xrpl.ledger.tx_count", static_cast<int64_t>(count));  // LCOV_EXCL_LINE
+    XRPL_TRACE_SET_ATTR(
+        "xrpl.ledger.tx_failed", static_cast<int64_t>(failed.size()));  // LCOV_EXCL_LINE
     return count;
 }
 

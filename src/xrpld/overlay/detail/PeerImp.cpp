@@ -1664,8 +1664,8 @@ PeerImp::onMessage(std::shared_ptr<protocol::TMLedgerData> const& m)
 void
 PeerImp::onMessage(std::shared_ptr<protocol::TMProposeSet> const& m)
 {
-    XRPL_TRACE_PEER(app_.getTelemetry(), "peer.proposal.receive");
-    XRPL_TRACE_SET_ATTR("xrpl.peer.id", static_cast<int64_t>(id_));
+    XRPL_TRACE_PEER(app_.getTelemetry(), "peer.proposal.receive");   // LCOV_EXCL_LINE
+    XRPL_TRACE_SET_ATTR("xrpl.peer.id", static_cast<int64_t>(id_));  // LCOV_EXCL_LINE
 
     protocol::TMProposeSet& set = *m;
 
@@ -1693,7 +1693,7 @@ PeerImp::onMessage(std::shared_ptr<protocol::TMProposeSet> const& m)
     // every time a spam packet is received
     PublicKey const publicKey{makeSlice(set.nodepubkey())};
     auto const isTrusted = app_.validators().trusted(publicKey);
-    XRPL_TRACE_SET_ATTR("xrpl.peer.proposal.trusted", isTrusted);
+    XRPL_TRACE_SET_ATTR("xrpl.peer.proposal.trusted", isTrusted);  // LCOV_EXCL_LINE
 
     // If the operator has specified that untrusted proposals be dropped then
     // this happens here I.e. before further wasting CPU verifying the signature
@@ -2261,8 +2261,8 @@ PeerImp::onMessage(std::shared_ptr<protocol::TMValidatorListCollection> const& m
 void
 PeerImp::onMessage(std::shared_ptr<protocol::TMValidation> const& m)
 {
-    XRPL_TRACE_PEER(app_.getTelemetry(), "peer.validation.receive");
-    XRPL_TRACE_SET_ATTR("xrpl.peer.id", static_cast<int64_t>(id_));
+    XRPL_TRACE_PEER(app_.getTelemetry(), "peer.validation.receive");  // LCOV_EXCL_LINE
+    XRPL_TRACE_SET_ATTR("xrpl.peer.id", static_cast<int64_t>(id_));   // LCOV_EXCL_LINE
 
     if (m->validation().size() < 50)
     {
@@ -2302,7 +2302,7 @@ PeerImp::onMessage(std::shared_ptr<protocol::TMValidation> const& m)
         // suppression for 30 seconds to avoid doing a relatively expensive
         // lookup every time a spam packet is received
         auto const isTrusted = app_.validators().trusted(val->getSignerPublic());
-        XRPL_TRACE_SET_ATTR("xrpl.peer.validation.trusted", isTrusted);
+        XRPL_TRACE_SET_ATTR("xrpl.peer.validation.trusted", isTrusted);  // LCOV_EXCL_LINE
 
         // If the operator has specified that untrusted validations be
         // dropped then this happens here I.e. before further wasting CPU
