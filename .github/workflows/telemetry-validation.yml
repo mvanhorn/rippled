@@ -49,6 +49,7 @@ on:
       - "feature/otel-*"
       - "feature/telemetry-*"
     paths:
+      - ".github/workflows/telemetry-validation.yml"
       - "docker/telemetry/**"
       - "include/xrpl/basics/Telemetry*.h"
       - "src/xrpld/app/misc/Telemetry*"
