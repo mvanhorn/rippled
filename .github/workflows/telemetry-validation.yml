@@ -91,6 +91,7 @@ jobs:
 
       - name: Print build environment
         uses: ./.github/actions/print-env
+        continue-on-error: true
 
       - name: Get number of processors
         uses: XRPLF/actions/get-nproc@cf0433aa74563aead044a1e395610c96d65a37cf
