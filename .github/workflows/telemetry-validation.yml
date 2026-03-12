@@ -15,6 +15,11 @@
 #   - setup-conan action → build-deps action → cmake configure → cmake build
 # This ensures dependency resolution, toolchain generation, and compiler
 # flags are identical to what the PR workflow uses.
+#
+# NOTE: Unlike the main CI, this workflow runs natively on ubuntu-latest
+# (not in a container), so we cannot use XRPLF/actions/prepare-runner
+# which assumes /root paths. Instead we replicate the relevant setup
+# steps inline.
 
 name: Telemetry Validation
 
@@ -60,6 +65,7 @@ concurrency:
 
 env:
   BUILD_DIR: build
+  # ccache configuration — mirrors reusable-build-test-config.yml
   CCACHE_NAMESPACE: telemetry-validation
   CCACHE_REMOTE_ONLY: true
   CCACHE_REMOTE_STORAGE: http://cache.dev.ripplex.io:8080|layout=bazel
@@ -75,10 +81,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Prepare runner
-        uses: XRPLF/actions/prepare-runner@2cbf481018d930656e9276fcc20dc0e3a0be5b6d
-        with:
-          enable_ccache: true
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq bc ninja-build ccache
+
+      - name: Install Python dependencies
+        run: pip3 install -r docker/telemetry/workload/requirements.txt
 
       - name: Print build environment
         uses: ./.github/actions/print-env
@@ -88,9 +97,6 @@ jobs:
         id: nproc
         with:
           subtract: 2
-
-      - name: Install Python dependencies
-        run: pip3 install -r docker/telemetry/workload/requirements.txt
 
       # ── Build steps (mirrors main CI: setup-conan → build-deps → cmake) ──
 
@@ -117,6 +123,8 @@ jobs:
             -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ..
 
       - name: Build xrpld
