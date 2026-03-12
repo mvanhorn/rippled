@@ -47,7 +47,7 @@ services:
     networks:
       - workload-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:13133/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/"]
       interval: 5s
       timeout: 3s
       retries: 10
