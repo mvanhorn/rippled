@@ -23,6 +23,7 @@ public:
 
             m_collector = beast::insight::StatsDCollector::New(address, prefix, journal);
         }
+        // LCOV_EXCL_START -- OTel collector path is not exercised in unit tests
         else if (server == "otel")
         {
             // Read OTLP metrics endpoint from [insight] section.
@@ -39,6 +40,7 @@ public:
 
             m_collector = beast::insight::OTelCollector::New(endpoint, prefix, instanceId, journal);
         }
+        // LCOV_EXCL_STOP
         else
         {
             m_collector = beast::insight::NullCollector::New();
