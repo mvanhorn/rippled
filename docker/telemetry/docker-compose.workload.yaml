@@ -38,7 +38,7 @@ services:
       - "8889:8889" # Prometheus metrics endpoint
       - "13133:13133" # Health check
     volumes:
-      - ../otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
     depends_on:
       - jaeger
       - tempo
@@ -71,7 +71,7 @@ services:
     ports:
       - "3200:3200" # Tempo HTTP API
     volumes:
-      - ../tempo.yaml:/etc/tempo.yaml:ro
+      - ./tempo.yaml:/etc/tempo.yaml:ro
       - tempo-data:/var/tempo
     networks:
       - workload-net
@@ -81,7 +81,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ../prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
       otel-collector:
         condition: service_healthy
@@ -114,8 +114,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ../grafana/provisioning:/etc/grafana/provisioning:ro
-      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - jaeger
       - tempo
