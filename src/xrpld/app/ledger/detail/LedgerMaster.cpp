@@ -406,7 +406,7 @@ bool
 LedgerMaster::storeLedger(std::shared_ptr<Ledger const> ledger)
 {
     XRPL_TRACE_LEDGER(app_.getTelemetry(), "ledger.store");  // LCOV_EXCL_LINE
-    XRPL_TRACE_SET_ATTR(
+    XRPL_TRACE_SET_ATTR(                                                      // LCOV_EXCL_LINE
         "xrpl.ledger.seq", static_cast<int64_t>(ledger->header().seq));  // LCOV_EXCL_LINE
 
     bool validated = ledger->header().validated;
@@ -913,7 +913,7 @@ LedgerMaster::checkAccept(std::shared_ptr<Ledger const> const& ledger)
     }
 
     XRPL_TRACE_LEDGER(app_.getTelemetry(), "ledger.validate");  // LCOV_EXCL_LINE
-    XRPL_TRACE_SET_ATTR(
+    XRPL_TRACE_SET_ATTR(                                                             // LCOV_EXCL_LINE
         "xrpl.ledger.seq", static_cast<int64_t>(ledger->header().seq));         // LCOV_EXCL_LINE
     XRPL_TRACE_SET_ATTR("xrpl.ledger.validations", static_cast<int64_t>(tvc));  // LCOV_EXCL_LINE
 

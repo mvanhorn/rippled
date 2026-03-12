@@ -63,7 +63,7 @@ buildLedgerImpl(
         built->header().seq < XRP_LEDGER_EARLIEST_FEES || built->read(keylet::fees()),
         "xrpl::buildLedgerImpl : valid ledger fees");
     built->setAccepted(closeTime, closeResolution, closeTimeCorrect);
-    XRPL_TRACE_SET_ATTR(
+    XRPL_TRACE_SET_ATTR(                                                      // LCOV_EXCL_LINE
         "xrpl.ledger.seq", static_cast<int64_t>(built->header().seq));  // LCOV_EXCL_LINE
 
     return built;
@@ -157,7 +157,7 @@ applyTransactions(
     // tried them in at least one final pass
     XRPL_ASSERT(txns.empty() || !certainRetry, "xrpl::applyTransactions : retry transactions");
     XRPL_TRACE_SET_ATTR("xrpl.ledger.tx_count", static_cast<int64_t>(count));  // LCOV_EXCL_LINE
-    XRPL_TRACE_SET_ATTR(
+    XRPL_TRACE_SET_ATTR(                                                      // LCOV_EXCL_LINE
         "xrpl.ledger.tx_failed", static_cast<int64_t>(failed.size()));  // LCOV_EXCL_LINE
     return count;
 }
