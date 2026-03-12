@@ -113,6 +113,9 @@ jobs:
           CONAN_PASS: ${{ secrets.CONAN_REMOTE_PASSWORD }}
         run: conan remote login xrplf "$CONAN_USER" --password "$CONAN_PASS"
 
+      - name: Enable optimized binary compatibility
+        run: conan config set core.graph:compatibility_mode=optimized
+
       - name: Build dependencies
         uses: ./.github/actions/build-deps
         with:
