@@ -59,11 +59,11 @@ concurrency:
 
 env:
   BUILD_DIR: build
-env:
-  BUILD_DIR: build
   CCACHE_REMOTE_ONLY: true
   CCACHE_REMOTE_STORAGE: "http://cache.dev.ripplex.io:8080|layout=bazel"
   CCACHE_NAMESPACE: telemetry-validation
+
+jobs:
   validate-telemetry:
     name: Telemetry Stack Validation
     runs-on: ubuntu-latest
@@ -76,9 +76,9 @@ env:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq bc python3 python3-pip ninja-build
-
           sudo apt-get install -y curl jq bc python3 python3-pip ninja-build ccache
+
+      - name: Install Python dependencies
         run: pip3 install -r docker/telemetry/workload/requirements.txt
 
       - name: Install Conan
@@ -89,13 +89,13 @@ env:
       - name: Set up Conan
         uses: ./.github/actions/setup-conan
 
-        uses: ./.github/actions/setup-conan
-
       - name: Log into Conan remote
         if: ${{ github.repository == 'XRPLF/rippled' }}
         run: conan remote login xrplf "${{ secrets.CONAN_REMOTE_USERNAME }}" --password "${{ secrets.CONAN_REMOTE_PASSWORD }}"
 
       - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
           path: ~/.conan2/p
           key: telemetry-conan-${{ runner.os }}-${{ hashFiles('conanfile.py') }}
           restore-keys: |
@@ -112,7 +112,6 @@ env:
           build_type: Release
 
       - name: Configure CMake
-      - name: Configure CMake
         working-directory: ${{ env.BUILD_DIR }}
         run: |
           cmake \
@@ -122,6 +121,7 @@ env:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ..
+
       - name: Build xrpld
         working-directory: ${{ env.BUILD_DIR }}
         run: |
