@@ -195,6 +195,21 @@ async def validate_spans(
         )
         return
 
+    # Diagnostic: list all available operations (span names) for the rippled
+    # service.  This output appears in CI logs and helps debug missing-span
+    # failures without needing to reproduce the full stack locally.
+    try:
+        async with session.get(f"{jaeger_url}/api/services/rippled/operations") as resp:
+            ops_data = await resp.json()
+            operations = ops_data.get("data", [])
+            logger.info(
+                "Jaeger operations for 'rippled' (%d total): %s",
+                len(operations),
+                operations,
+            )
+    except Exception as exc:
+        logger.warning("Failed to fetch Jaeger operations: %s", exc)
+
     # Check each expected span.
     for span_def in expected["spans"]:
         span_name = span_def["name"]
@@ -399,6 +414,40 @@ async def validate_metrics(
         report:         ValidationReport to accumulate results.
     """
     logger.info("--- Metric Validation (Prometheus) ---")
+
+    # Diagnostic: list all metric names in Prometheus.  Helps debug name
+    # mismatches between expected_metrics.json and actual emissions.
+    try:
+        async with session.get(
+            f"{prometheus_url}/api/v1/label/__name__/values"
+        ) as resp:
+            label_data = await resp.json()
+            all_metrics = label_data.get("data", [])
+            # Log rippled-related and Phase 9 metrics for debugging.
+            relevant = [
+                m
+                for m in all_metrics
+                if "rippled" in m.lower()
+                or m.startswith(
+                    (
+                        "rpc_method",
+                        "cache_",
+                        "txq_",
+                        "object_count",
+                        "load_factor",
+                        "nodestore",
+                        "traces_span",
+                    )
+                )
+            ]
+            logger.info(
+                "Prometheus metrics (relevant, %d of %d total): %s",
+                len(relevant),
+                len(all_metrics),
+                relevant,
+            )
+    except Exception as exc:
+        logger.warning("Failed to fetch Prometheus metric names: %s", exc)
 
     with open(EXPECTED_METRICS_FILE) as f:
         expected = json.load(f)

@@ -31,12 +31,12 @@
       "rippled_State_Accounting_Full_duration",
       "rippled_Peer_Finder_Active_Inbound_Peers",
       "rippled_Peer_Finder_Active_Outbound_Peers",
-      "rippled_job_count"
+      "rippled_jobq_job_count"
     ]
   },
   "statsd_counters": {
-    "description": "beast::insight counters emitted via StatsD UDP.",
-    "metrics": ["rippled_rpc_requests", "rippled_ledger_fetches"]
+    "description": "beast::insight counters emitted via StatsD UDP. The OTel Prometheus exporter appends _total to monotonic counters.",
+    "metrics": ["rippled_rpc_requests_total", "rippled_ledger_fetches_total"]
   },
   "statsd_histograms": {
     "description": "beast::insight timers/histograms emitted via StatsD UDP.",
@@ -52,36 +52,28 @@
     ]
   },
   "phase9_nodestore": {
-    "description": "Phase 9 NodeStore I/O metrics (via beast::insight extensions).",
-    "metrics": [
-      "rippled_nodestore_reads_total",
-      "rippled_nodestore_writes",
-      "rippled_nodestore_read_bytes",
-      "rippled_nodestore_written_bytes"
-    ]
+    "description": "Phase 9 NodeStore I/O observable gauge (MetricsRegistry via OTLP). Single metric with 'metric' label distinguishing sub-metrics.",
+    "metrics": ["nodestore_state"]
   },
   "phase9_cache": {
-    "description": "Phase 9 cache hit rate metrics (via OTel MetricsRegistry).",
-    "metrics": ["rippled_cache_SLE_hit_rate", "rippled_cache_treenode_size"]
+    "description": "Phase 9 cache hit rate observable gauge (MetricsRegistry via OTLP). Single metric with 'metric' label.",
+    "metrics": ["cache_metrics"]
   },
   "phase9_txq": {
-    "description": "Phase 9 transaction queue metrics (via OTel MetricsRegistry).",
-    "metrics": ["rippled_txq_count", "rippled_txq_max_size"]
+    "description": "Phase 9 transaction queue observable gauge (MetricsRegistry via OTLP). Single metric with 'metric' label.",
+    "metrics": ["txq_metrics"]
   },
   "phase9_rpc_method": {
-    "description": "Phase 9 per-RPC-method metrics (via OTel Metrics SDK).",
-    "metrics": [
-      "rippled_rpc_method_started_total",
-      "rippled_rpc_method_finished_total"
-    ]
+    "description": "Phase 9 per-RPC-method counters (MetricsRegistry via OTLP).",
+    "metrics": ["rpc_method_started_total", "rpc_method_finished_total"]
   },
   "phase9_objects": {
-    "description": "Phase 9 counted object instances.",
-    "metrics": ["rippled_object_count"]
+    "description": "Phase 9 counted object instances observable gauge (MetricsRegistry via OTLP).",
+    "metrics": ["object_count"]
   },
   "phase9_load": {
-    "description": "Phase 9 fee escalation and load factor metrics.",
-    "metrics": ["rippled_load_factor"]
+    "description": "Phase 9 fee escalation and load factor observable gauge (MetricsRegistry via OTLP).",
+    "metrics": ["load_factor_metrics"]
   },
   "grafana_dashboards": {
     "description": "All 10 Grafana dashboards that must render data.",
