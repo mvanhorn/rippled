@@ -213,10 +213,20 @@ async def fund_account(
             }
         ],
     )
-    engine_result = resp.get("result", {}).get("engine_result", "unknown")
+    result = resp.get("result", {})
+    engine_result = result.get("engine_result", "unknown")
     success = engine_result in ("tesSUCCESS", "terQUEUED")
     if not success:
-        logger.warning("Fund %s failed: %s", dest.name, engine_result)
+        # Log the full result to help diagnose submit failures in CI.
+        error = result.get("error", "")
+        error_msg = result.get("error_message", "")
+        logger.warning(
+            "Fund %s failed: engine_result=%s error=%s error_message=%s",
+            dest.name,
+            engine_result,
+            error,
+            error_msg,
+        )
     return success, genesis_seq + 1
 
 
@@ -233,7 +243,12 @@ async def get_account_sequence(
         Current sequence number.
     """
     resp = await ws_request(ws, "account_info", [{"account": account}])
-    return resp.get("result", {}).get("account_data", {}).get("Sequence", 0)
+    result = resp.get("result", {})
+    if "account_data" not in result:
+        error = result.get("error", "unknown")
+        logger.warning("account_info for %s failed: %s", account[:12], error)
+        return 0
+    return result["account_data"].get("Sequence", 0)
 
 
 # ---------------------------------------------------------------------------

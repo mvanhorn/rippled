@@ -231,10 +231,8 @@ $SEED
 [validators_file]
 $WORKDIR/validators.txt
 
-[ips_fixed]
+[ips]
 ${IPS_FIXED}
-[peer_private]
-1
 
 [telemetry]
 enabled=1
@@ -258,6 +256,9 @@ prefix=rippled
 
 [rpc_startup]
 { "command": "log_level", "severity": "warning" }
+
+[signing_support]
+true
 
 [ssl_verify]
 0
