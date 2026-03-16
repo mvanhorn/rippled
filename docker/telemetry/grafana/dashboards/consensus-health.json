@@ -239,7 +239,7 @@
     },
     {
       "title": "Consensus Mode Over Time",
-      "description": "Breakdown of consensus ledger close events by the node's consensus mode (proposing, observing, wrongLedger, switchedLedger). Grouped by the xrpl.consensus.mode span attribute from consensus.ledger_close. A healthy validator should be predominantly in 'proposing' mode. Frequent 'wrongLedger' or 'switchedLedger' indicates sync issues.",
+      "description": "Breakdown of consensus ledger close events by the node's consensus mode (Proposing, Observing, Wrong Ledger, Switched Ledger). Grouped by the xrpl.consensus.mode span attribute from consensus.ledger_close. A healthy validator should be predominantly in Proposing mode. Frequent Wrong Ledger or Switched Ledger indicates sync issues.",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
