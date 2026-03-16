@@ -332,7 +332,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "rippled - Fee Market & TxQ",
+  "title": "Fee Market & TxQ",
   "uid": "rippled-fee-market",
   "version": 1
 }

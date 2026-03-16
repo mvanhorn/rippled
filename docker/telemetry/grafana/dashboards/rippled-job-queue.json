@@ -359,7 +359,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "rippled - Job Queue Analysis",
+  "title": "Job Queue Analysis",
   "uid": "rippled-job-queue",
   "version": 1
 }

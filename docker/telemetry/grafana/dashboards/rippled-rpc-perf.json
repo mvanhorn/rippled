@@ -368,7 +368,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "rippled - RPC Performance (OTel)",
+  "title": "RPC Performance (OTel)",
   "uid": "rippled-rpc-perf",
   "version": 1
 }
