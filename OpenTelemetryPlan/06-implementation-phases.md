@@ -750,56 +750,72 @@ See [Phase9_taskList.md](./Phase9_taskList.md) for detailed per-task breakdown.
 
 ---
 
-## 6.8.3 Phase 10: Synthetic Workload Generation & Telemetry Validation (Weeks 16-17) — Future Enhancement
+## 6.8.3 Phase 10: Synthetic Workload Generation & Telemetry Validation (Weeks 16-17)
 
-> **Status**: Planned, not yet implemented.
+> **Status**: In progress.
 
 ### Motivation
 
-Before the telemetry stack (Phases 1-9) can be considered production-ready, we need automated proof that all 16 spans, 22 attributes, 300+ metrics, 10 Grafana dashboards, and log-trace correlation work correctly under realistic load. This phase establishes a reusable CI-integrated validation suite and performance benchmark baseline.
+Before the telemetry stack (Phases 1-9) can be considered production-ready, we need automated proof that all spans, attributes, metrics, Grafana dashboards, and log-trace correlation work correctly under realistic load. This phase establishes a reusable CI-integrated validation suite and performance benchmark baseline.
 
 ### Architecture
 
+The validation uses a **2-node** validator cluster running as local processes alongside a Docker Compose telemetry stack (Collector, Jaeger, Prometheus, Grafana). Two nodes are sufficient for consensus rounds and peer-to-peer span validation while minimizing CI resource usage.
+
 ```mermaid
 flowchart LR
-    subgraph harness["Docker Compose Workload Harness"]
+    subgraph harness["2-Node Validator Cluster (local processes)"]
         direction TB
-        V1["Validator 1"] ~~~ V2["Validator 2"] ~~~ V3["Validator 3"]
-        V4["Validator 4"] ~~~ V5["Validator 5"]
+        V1["Validator 1"] ~~~ V2["Validator 2"]
+    end
+
+    subgraph telemetry["Docker Compose Telemetry Stack"]
+        direction TB
+        COL["OTel Collector<br/>(OTLP + StatsD)"]
+        JAE["Jaeger<br/>(trace search)"]
+        PROM["Prometheus<br/>(metrics)"]
+        GRAF["Grafana<br/>(dashboards)"]
     end
 
     subgraph generators["Workload Generators"]
         RPC["RPC Load Generator<br/>(configurable RPS,<br/>command distribution)"]
-        TX["Transaction Submitter<br/>(Payment, Offer, NFT,<br/>Escrow, AMM mix)"]
+        TX["Transaction Submitter<br/>(10 tx types via<br/>WebSocket command API)"]
     end
 
     subgraph validation["Validation Suite"]
-        SV["Span Validator<br/>(Jaeger/Tempo API)"]
-        MV["Metric Validator<br/>(Prometheus API)"]
-        LV["Log-Trace Validator<br/>(Loki API)"]
+        SV["Span Validator<br/>(Jaeger API)"]
+        MV["Metric Validator<br/>(Prometheus API,<br/>required + optional tiers)"]
         DV["Dashboard Validator<br/>(Grafana API)"]
         BM["Benchmark Suite<br/>(CPU, memory, latency<br/>ON vs OFF comparison)"]
     end
 
     generators --> harness
-    harness --> validation
+    harness --> telemetry
+    telemetry --> validation
 
     style harness fill:#1a2633,color:#ccc,stroke:#4a90d9
+    style telemetry fill:#1a2633,color:#ccc,stroke:#4a90d9
     style generators fill:#1a3320,color:#ccc,stroke:#5cb85c
     style validation fill:#332a1a,color:#ccc,stroke:#f0ad4e
     style V1 fill:#4a90d9,color:#fff,stroke:#2a6db5
     style V2 fill:#4a90d9,color:#fff,stroke:#2a6db5
-    style V3 fill:#4a90d9,color:#fff,stroke:#2a6db5
-    style V4 fill:#4a90d9,color:#fff,stroke:#2a6db5
-    style V5 fill:#4a90d9,color:#fff,stroke:#2a6db5
+    style COL fill:#4a90d9,color:#fff,stroke:#2a6db5
+    style JAE fill:#4a90d9,color:#fff,stroke:#2a6db5
+    style PROM fill:#4a90d9,color:#fff,stroke:#2a6db5
+    style GRAF fill:#4a90d9,color:#fff,stroke:#2a6db5
     style RPC fill:#5cb85c,color:#fff,stroke:#3d8b3d
     style TX fill:#5cb85c,color:#fff,stroke:#3d8b3d
     style SV fill:#f0ad4e,color:#000,stroke:#c78c2e
     style MV fill:#f0ad4e,color:#000,stroke:#c78c2e
-    style LV fill:#f0ad4e,color:#000,stroke:#c78c2e
     style DV fill:#f0ad4e,color:#000,stroke:#c78c2e
     style BM fill:#f0ad4e,color:#000,stroke:#c78c2e
 ```
+
+### Key Implementation Details
+
+- **Transaction submitter** uses rippled's native WebSocket command format (`{"command": "submit", ...}`) — not JSON-RPC format. Response data lives inside `"result"` with `"status"` at the top level.
+- **Node config** requires `[signing_support] true` for server-side signing, and `[ips]` (not `[ips_fixed]`) to ensure peer connections count in `Peer_Finder_Active_*` metrics.
+- **Metric validation** supports two tiers: required `"metrics"` (failure = FAIL) and `"optional_metrics"` (failure = PASS with warning) for environment-dependent metrics like `ios_latency` which only fires when I/O thread latency >= 10ms.
 
 ### Tasks
 
@@ -817,11 +833,11 @@ See [Phase10_taskList.md](./Phase10_taskList.md) for detailed per-task breakdown
 
 ### Exit Criteria
 
-- [ ] 5-node validator cluster starts and reaches consensus in docker-compose
-- [ ] Validation suite confirms all 16 spans, 22 attributes, 300+ metrics
-- [ ] All 10 Grafana dashboards render data (no empty panels)
+- [x] 2-node validator cluster starts and reaches consensus
+- [ ] Validation suite confirms all required spans, attributes, and metrics
+- [ ] All 10 Grafana dashboards render data
 - [ ] Benchmark shows < 3% CPU overhead, < 5MB memory overhead
-- [ ] CI workflow runs validation on telemetry branch changes
+- [x] CI workflow runs validation on telemetry branch changes
 
 ---
 

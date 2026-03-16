@@ -1,6 +1,6 @@
 # Phase 10: Synthetic Workload Generation & Telemetry Validation — Task List
 
-> **Status**: Future Enhancement
+> **Status**: In Progress
 >
 > **Goal**: Build tools that generate realistic XRPL traffic to validate the full Phases 1-9 telemetry stack end-to-end — all spans, attributes, metrics, dashboards, and log-trace correlation — under controlled load.
 >
@@ -33,29 +33,23 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 ## Task 10.1: Multi-Node Test Harness
 
-**Objective**: Create a docker-compose environment with 3-5 validator nodes that produces real consensus rounds.
+**Objective**: Create a docker-compose environment with validator nodes that produces real consensus rounds.
 
-**What to do**:
+**Implementation notes**:
 
-- Create `docker/telemetry/docker-compose.workload.yaml`:
-  - 5 rippled validator nodes with UNL configured for each other
-  - All telemetry enabled: `[telemetry] enabled=1`, `[insight] server=otel`
-  - Full OTel stack: Collector, Jaeger, Tempo, Prometheus, Loki, Grafana
-  - Shared network with service discovery
-
-- Each node should:
-  - Generate validator keys at startup
-  - Configure all 5 nodes in its UNL
-  - Enable all trace categories including `trace_peer=1`
-  - Write logs to a file tailed by the OTel Collector filelog receiver
-
-- Include a `Makefile` target: `make telemetry-workload-up` / `make telemetry-workload-down`
+- Uses a **2-node** validator cluster (sufficient for consensus + peer spans, minimizes CI resources).
+- Nodes run as **local processes** (not in containers) — the Docker Compose stack only hosts telemetry backends.
+- `run-full-validation.sh` orchestrates: starts telemetry stack → generates validator keys → starts nodes → runs workloads → validates → cleans up.
+- Node config requires:
+  - `[signing_support] true` for server-side transaction signing
+  - `[ips]` (not `[ips_fixed]`) so peer connections are counted in `Peer_Finder_Active_*` metrics (fixed peers are excluded from these counters by design in `Counts.h`)
+  - All trace categories: `trace_rpc=1`, `trace_consensus=1`, `trace_transactions=1`
 
 **Key files**:
 
-- New: `docker/telemetry/docker-compose.workload.yaml`
-- New: `docker/telemetry/workload/generate-validator-keys.sh`
-- New: `docker/telemetry/workload/xrpld-validator.cfg.template`
+- `docker/telemetry/docker-compose.workload.yaml` — OTel Collector, Jaeger, Prometheus, Grafana
+- `docker/telemetry/workload/generate-validator-keys.sh` — generates keys and UNL for N nodes
+- `docker/telemetry/workload/run-full-validation.sh` — main orchestrator
 
 ---
 
@@ -90,26 +84,21 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 **Objective**: Generate diverse transaction types to exercise `tx.*` and `ledger.*` spans.
 
-**What to do**:
+**Implementation notes**:
 
-- Create `docker/telemetry/workload/tx_submitter.py`:
-  - Pre-funds test accounts from genesis account
-  - Submits a mix of transaction types:
-    - `Payment` (XRP and issued currencies) — exercises `tx.process`, `tx.apply`
-    - `OfferCreate` / `OfferCancel` — DEX activity
-    - `TrustSet` — trust line creation for issued currencies
-    - `NFTokenMint` / `NFTokenCreateOffer` / `NFTokenAcceptOffer` — NFT activity
-    - `EscrowCreate` / `EscrowFinish` — escrow lifecycle
-    - `AMMCreate` / `AMMDeposit` / `AMMWithdraw` — AMM pool operations (if amendment enabled)
-  - Configurable: TPS target, transaction mix weights, duration
-  - Monitors submission results and tracks success/failure rates
-
-- The transaction mix ensures the telemetry captures the full range of ledger activity that third parties care about.
+- Uses rippled's **native WebSocket command format** (`{"command": "submit", "secret": ..., "tx_json": {...}}`), not JSON-RPC format.
+  - Response structure: `{"status": "success", "result": {"engine_result": "tesSUCCESS", ...}, "type": "response"}`
+  - The `ws_request()` helper unwraps `result` so callers read fields directly.
+  - Error responses have `"status": "error"` at the top level with `error` and `error_message` fields.
+- Pre-funds test accounts from the genesis account (`rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh`).
+- Requires `[signing_support] true` in node config for server-side signing.
+- Supported transaction types: Payment, OfferCreate, OfferCancel, TrustSet, NFTokenMint, NFTokenCreateOffer, EscrowCreate, EscrowFinish, AMMCreate, AMMDeposit.
+- Exercises spans: `tx.process` (local submit), `tx.receive` (peer propagation), `tx.apply` (ledger application).
 
 **Key files**:
 
-- New: `docker/telemetry/workload/tx_submitter.py`
-- New: `docker/telemetry/workload/test_accounts.json` (pre-generated keypairs)
+- `docker/telemetry/workload/tx_submitter.py`
+- `docker/telemetry/workload/test_accounts.json` (test account role definitions)
 
 ---
 
@@ -117,37 +106,34 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 **Objective**: Automated scripts that verify all expected telemetry data exists after a workload run.
 
-**What to do**:
+**Implementation notes**:
 
-- Create `docker/telemetry/workload/validate_telemetry.py`:
+- `validate_telemetry.py` runs all checks and produces a JSON report.
 
-  **Span validation** (queries Jaeger/Tempo API):
-  - Assert all 16 span names appear in traces
-  - Assert each span has its required attributes (22 total attributes across spans)
-  - Assert parent-child relationships are correct (`rpc.request` → `rpc.process` → `rpc.command.*`)
-  - Assert span durations are reasonable (> 0, < 60s)
+  **Span validation** (queries Jaeger API):
+  - Lists all registered operations as diagnostics
+  - Asserts span names from `expected_spans.json` appear in traces
+  - Validates required attributes per span type
+  - Validates parent-child span hierarchies
+  - Asserts all span durations are within bounds (> 0)
 
   **Metric validation** (queries Prometheus API):
-  - Assert all SpanMetrics-derived metrics are non-zero: `traces_span_metrics_calls_total`, `traces_span_metrics_duration_milliseconds_bucket`
-  - Assert all StatsD metrics are non-zero: `rippled_LedgerMaster_Validated_Ledger_Age`, `rippled_Peer_Finder_Active_*`, etc.
-  - Assert all Phase 9 metrics are non-zero: `rippled_nodestore_*`, `rippled_cache_*`, `rippled_txq_*`, `rippled_rpc_method_*`, `rippled_object_count`, `rippled_load_factor*`
-  - Assert metric label cardinality is within bounds
-
-  **Log-trace correlation validation** (queries Loki API):
-  - Assert logs contain `trace_id=` and `span_id=` fields
-  - Pick a random trace_id from Jaeger → query Loki for matching logs → assert results exist
-  - Assert Grafana derived field links are functional
+  - Lists all metric names as diagnostics (helps debug naming issues)
+  - Checks all `"metrics"` entries in `expected_metrics.json` — absence causes FAIL
+  - Checks `"optional_metrics"` entries — absence produces PASS with warning (for environment-dependent metrics like `ios_latency` which only fires when I/O thread latency >= 10ms)
+  - Validates: SpanMetrics, StatsD gauges/counters/histograms, overlay traffic, Phase 9 OTLP metrics (nodestore, cache, txq, rpc_method, object_count, load_factor)
 
   **Dashboard validation**:
-  - For each of the 10 Grafana dashboards, query the dashboard API and assert no panels show "No data"
+  - Queries Grafana API for each of the 10 dashboard UIDs
+  - Asserts dashboards load and have panels
 
-- Output: JSON report with pass/fail per check, suitable for CI.
+- Output: `validation-report.json` with per-check pass/fail, suitable for CI.
 
 **Key files**:
 
-- New: `docker/telemetry/workload/validate_telemetry.py`
-- New: `docker/telemetry/workload/expected_spans.json` (span inventory for validation)
-- New: `docker/telemetry/workload/expected_metrics.json` (metric inventory for validation)
+- `docker/telemetry/workload/validate_telemetry.py`
+- `docker/telemetry/workload/expected_spans.json` (span inventory with attributes and hierarchies)
+- `docker/telemetry/workload/expected_metrics.json` (metric inventory with required and optional tiers)
 
 ---
 
@@ -231,12 +217,11 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 ## Exit Criteria
 
-- [ ] 5-node validator cluster starts and reaches consensus in docker-compose
-- [ ] RPC load generator fires all traced RPC commands at configurable rates
-- [ ] Transaction submitter generates 6+ transaction types at configurable TPS
-- [ ] Validation suite confirms all 16 spans, 22 attributes, 300+ metrics are present
-- [ ] Log-trace correlation validated end-to-end (Loki ↔ Tempo)
-- [ ] All 10 Grafana dashboards render data (no empty panels)
+- [x] 2-node validator cluster starts and reaches consensus
+- [x] RPC load generator fires all traced RPC commands at configurable rates
+- [x] Transaction submitter generates 10 transaction types at configurable TPS
+- [ ] Validation suite confirms all spans, attributes, and metrics pass (required + optional)
+- [ ] All 10 Grafana dashboards render data
 - [ ] Benchmark shows < 3% CPU overhead, < 5MB memory overhead
-- [ ] CI workflow runs validation on telemetry branch changes
-- [ ] Validation report output is CI-parseable (JSON with exit codes)
+- [x] CI workflow runs validation on telemetry branch changes
+- [x] Validation report output is CI-parseable (JSON with exit codes)

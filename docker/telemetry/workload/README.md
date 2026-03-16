@@ -19,21 +19,27 @@ docker/telemetry/workload/run-full-validation.sh --cleanup
 
 ## Architecture
 
+The validation suite runs a 2-node rippled cluster as local processes alongside
+a Docker Compose telemetry stack. The 2-node setup is sufficient for exercising
+consensus, peer-to-peer spans (proposals, validations), and all metric pipelines,
+while keeping CI resource usage manageable.
+
 ```
 run-full-validation.sh (orchestrator)
   |
   |-- docker-compose.workload.yaml
-  |     |-- otel-collector (traces + StatsD)
-  |     |-- jaeger (trace search)
-  |     |-- tempo (trace storage)
-  |     |-- prometheus (metrics)
-  |     |-- loki (log aggregation)
-  |     |-- grafana (dashboards)
+  |     |-- otel-collector (traces via OTLP + StatsD receiver)
+  |     |-- jaeger (trace search API)
+  |     |-- prometheus (metrics scraping)
+  |     |-- grafana (dashboards, provisioned automatically)
   |
   |-- generate-validator-keys.sh
   |     -> validator-keys.json, validators.txt
   |
-  |-- 5x xrpld nodes (local processes, full telemetry)
+  |-- 2x xrpld nodes (local processes, full telemetry)
+  |     - Each node: [telemetry] enabled=1, trace_rpc/consensus/transactions
+  |     - [signing_support] true (server-side signing for tx_submitter)
+  |     - Peer discovery via [ips] (not [ips_fixed]) for active peer counts
   |
   |-- rpc_load_generator.py (WebSocket RPC traffic)
   |-- tx_submitter.py (transaction diversity)
@@ -93,14 +99,21 @@ python3 rpc_load_generator.py --endpoints ws://localhost:6006 \
 
 ### tx_submitter.py
 
-Submits diverse transaction types to exercise the full span and metric surface:
+Submits diverse transaction types to exercise the full span and metric surface.
+Uses rippled's **native WebSocket command format** (`{"command": ...}`) rather
+than JSON-RPC format. The response payload is inside the `"result"` key, with
+`"status"` at the top level.
 
-- Payment (XRP transfers)
+Supported transaction types:
+
+- Payment (XRP transfers) — exercises `tx.process`, `tx.receive`, `tx.apply`
 - OfferCreate / OfferCancel (DEX activity)
 - TrustSet (trust line creation)
 - NFTokenMint / NFTokenCreateOffer (NFT activity)
 - EscrowCreate / EscrowFinish (escrow lifecycle)
 - AMMCreate / AMMDeposit (AMM pool operations)
+
+Requires `[signing_support] true` in the node config for server-side signing.
 
 ```bash
 # Basic usage
@@ -115,10 +128,15 @@ python3 tx_submitter.py --endpoint ws://localhost:6006 \
 
 Automated validation that all expected telemetry data exists:
 
-- **Span validation**: All 16+ span types with required attributes
-- **Metric validation**: SpanMetrics, StatsD, Phase 9 metrics
-- **Log-trace correlation**: trace_id/span_id in Loki logs
-- **Dashboard validation**: All 10 Grafana dashboards accessible
+- **Span validation**: All span types from `expected_spans.json` with required attributes and parent-child hierarchies
+- **Metric validation**: SpanMetrics, StatsD gauges/counters/histograms, Phase 9 OTLP metrics from `expected_metrics.json`
+- **Log-trace correlation**: trace_id/span_id in Loki logs (optional, requires Loki)
+- **Dashboard validation**: All 10 Grafana dashboards load with panels
+
+Metrics in `expected_metrics.json` support two tiers:
+
+- `"metrics"`: Required — absence causes a FAIL
+- `"optional_metrics"`: Environment-dependent — absence produces a PASS with a warning (e.g., `ios_latency` only fires when I/O thread latency >= 10ms)
 
 ```bash
 # Run all validations
@@ -188,10 +206,45 @@ The validation runs as a GitHub Actions workflow (`.github/workflows/telemetry-v
 
 ## Configuration Files
 
-| File                           | Purpose                                         |
-| ------------------------------ | ----------------------------------------------- |
-| `expected_spans.json`          | Span inventory (names, attributes, hierarchies) |
-| `expected_metrics.json`        | Metric inventory (SpanMetrics, StatsD, Phase 9) |
-| `test_accounts.json`           | Test account roles (keys generated at runtime)  |
-| `xrpld-validator.cfg.template` | Node config template with placeholders          |
-| `requirements.txt`             | Python dependencies                             |
+| File                    | Purpose                                                       |
+| ----------------------- | ------------------------------------------------------------- |
+| `expected_spans.json`   | Span inventory (names, attributes, hierarchies, config flags) |
+| `expected_metrics.json` | Metric inventory with `metrics` and `optional_metrics` lists  |
+| `test_accounts.json`    | Test account roles (keys generated at runtime)                |
+| `requirements.txt`      | Python dependencies                                           |
+
+### expected_metrics.json Format
+
+```json
+{
+  "category_name": {
+    "description": "Human-readable description.",
+    "metrics": ["required_metric_1", "required_metric_2"],
+    "optional_metrics": ["env_dependent_metric"],
+    "optional_note": "Explanation of why these metrics may not fire."
+  }
+}
+```
+
+### expected_spans.json Format
+
+Each span entry defines its name, category, parent (for hierarchy validation),
+required attributes, and the `config_flag` that must be enabled:
+
+```json
+{
+  "name": "rpc.request",
+  "category": "rpc",
+  "parent": null,
+  "required_attributes": ["rpc.method", "rpc.grpc.status_code"],
+  "config_flag": "trace_rpc"
+}
+```
+
+## Node Configuration Notes
+
+The orchestrator (`run-full-validation.sh`) generates node configs with:
+
+- `[telemetry] enabled=1` with all trace categories (`trace_rpc`, `trace_consensus`, `trace_transactions`)
+- `[signing_support] true` — required for `tx_submitter.py` to submit signed transactions via WebSocket
+- `[ips]` (not `[ips_fixed]`) — ensures peer connections are counted in `Peer_Finder_Active_Inbound/Outbound_Peers` metrics (fixed peers are excluded from these counters by design)
