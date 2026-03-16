@@ -784,7 +784,7 @@ flowchart LR
 
     subgraph validation["Validation Suite"]
         SV["Span Validator<br/>(Jaeger API)"]
-        MV["Metric Validator<br/>(Prometheus API,<br/>required + optional tiers)"]
+        MV["Metric Validator<br/>(Prometheus API,<br/>all 26 metrics required)"]
         DV["Dashboard Validator<br/>(Grafana API)"]
         BM["Benchmark Suite<br/>(CPU, memory, latency<br/>ON vs OFF comparison)"]
     end
@@ -813,9 +813,12 @@ flowchart LR
 
 ### Key Implementation Details
 
-- **Transaction submitter** uses rippled's native WebSocket command format (`{"command": "submit", ...}`) — not JSON-RPC format. Response data lives inside `"result"` with `"status"` at the top level.
+- **Transaction submitter and RPC load generator** both use rippled's native WebSocket command format (`{"command": ...}`) — not JSON-RPC format. Response data lives inside `"result"` with `"status"` at the top level.
 - **Node config** requires `[signing_support] true` for server-side signing, and `[ips]` (not `[ips_fixed]`) to ensure peer connections count in `Peer_Finder_Active_*` metrics.
-- **Metric validation** requires every metric in `expected_metrics.json` to have > 0 Prometheus series. The workload generators must produce enough load to trigger all metrics, including `ios_latency` (I/O thread latency >= 10ms threshold).
+- **Metric validation** uses the Prometheus `/api/v1/series` endpoint (not instant queries) to avoid false negatives from stale StatsD gauges. Every metric in `expected_metrics.json` must have > 0 series.
+- **StatsD gauge fix**: `StatsDGaugeImpl` initializes `m_dirty = true` so all gauges emit their initial value on first flush. Without this, gauges starting at 0 that never change (e.g. `jobq_job_count`) would be invisible in Prometheus.
+- **I/O latency fix**: `io_latency_sampler` emits unconditionally on first sample, then applies the 10 ms threshold. This ensures `ios_latency` is registered in Prometheus even in low-load CI environments.
+- **tx.receive span**: Sets default attributes (`xrpl.tx.suppressed = false`, `xrpl.tx.status = "new"`) on span creation so they are always present. The suppressed/bad code paths override these when applicable.
 
 ### Tasks
 
@@ -831,11 +834,40 @@ flowchart LR
 
 See [Phase10_taskList.md](./Phase10_taskList.md) for detailed per-task breakdown.
 
+### Validation Check Inventory (71 Checks)
+
+The validation suite (`validate_telemetry.py`) runs exactly 71 checks, broken down as:
+
+- **1 service registration** — `rippled` exists in Jaeger
+- **17 span existence** — `rpc.request`, `rpc.process`, `rpc.ws_message`, `rpc.command.*`, `tx.process`, `tx.receive`, `tx.apply`, `consensus.proposal.send`, `consensus.ledger_close`, `consensus.accept`, `consensus.validation.send`, `consensus.accept.apply`, `ledger.build`, `ledger.validate`, `ledger.store`, `peer.proposal.receive`, `peer.validation.receive`
+- **14 span attribute** — required attributes on the 14 spans that define them (22 unique attributes total)
+- **2 span hierarchies** — `rpc.process` -> `rpc.command.*`, `ledger.build` -> `tx.apply` (1 skipped: `rpc.request` -> `rpc.process`, cross-thread)
+- **1 span duration bounds** — all spans > 0 and < 60 s
+- **26 metric existence** — 4 SpanMetrics (`traces_span_metrics_calls_total`, `..._duration_milliseconds_{bucket,count,sum}`), 6 StatsD gauges (`LedgerMaster_Validated_Ledger_Age`, `Published_Ledger_Age`, `State_Accounting_Full_duration`, `Peer_Finder_Active_{Inbound,Outbound}_Peers`, `jobq_job_count`), 2 StatsD counters (`rpc_requests_total`, `ledger_fetches_total`), 3 StatsD histograms (`rpc_time`, `rpc_size`, `ios_latency`), 4 overlay traffic (`total_Bytes_{In,Out}`, `total_Messages_{In,Out}`), 7 Phase 9 OTLP (`nodestore_state`, `cache_metrics`, `txq_metrics`, `rpc_method_{started,finished}_total`, `object_count`, `load_factor_metrics`)
+- **10 dashboard loads** — `rippled-rpc-perf`, `rippled-transactions`, `rippled-consensus`, `rippled-ledger-ops`, `rippled-peer-net`, `rippled-system-node-health`, `rippled-system-network`, `rippled-system-rpc`, `rippled-system-overlay-detail`, `rippled-system-ledger-sync`
+
+See [Phase10_taskList.md](./Phase10_taskList.md) for the full numbered check-by-check enumeration.
+
+### Current Status
+
+**Working** (71/71 checks pass in CI):
+All 17 spans, 26 metrics, 10 dashboards, 14 attribute checks, 2 hierarchies, and duration bounds validated.
+
+**Not implemented or not available in CI**:
+
+1. Performance benchmark suite (Task 10.5) — not started
+2. `rpc.request` -> `rpc.process` parent-child hierarchy — skipped (cross-thread context propagation)
+3. Log-trace correlation validation (Loki) — not included in checks
+4. Full 255+ StatsD metric coverage — only 26 representative metrics validated
+5. Sustained load / backpressure testing — not implemented
+6. `docs/telemetry-runbook.md` updates — not done
+7. `09-data-collection-reference.md` "Validation" section — not done
+
 ### Exit Criteria
 
 - [x] 2-node validator cluster starts and reaches consensus
-- [ ] Validation suite confirms all required spans, attributes, and metrics
-- [ ] All 10 Grafana dashboards render data
+- [x] Validation suite confirms all required spans, attributes, and metrics (71/71 checks)
+- [x] All 10 Grafana dashboards render data
 - [ ] Benchmark shows < 3% CPU overhead, < 5MB memory overhead
 - [x] CI workflow runs validation on telemetry branch changes
 

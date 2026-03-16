@@ -22,7 +22,7 @@
 
 Before Phases 1-9 can be considered production-ready, we need proof that:
 
-1. All 16 spans fire with correct attributes under real transaction workloads
+1. All 17 spans fire with correct attributes under real transaction workloads
 2. All 255+ StatsD metrics + ~50 Phase 9 metrics appear in Prometheus with non-zero values
 3. Log-trace correlation (Phase 8) produces clickable trace_id links in Loki
 4. All 10 Grafana dashboards render meaningful data (no empty panels)
@@ -108,19 +108,32 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 **Implementation notes**:
 
-- `validate_telemetry.py` runs all checks and produces a JSON report.
+- `validate_telemetry.py` runs **71 checks** and produces a JSON report.
+
+  The 71 checks break down as:
+
+  | Category             | Count | Source                                    |
+  | -------------------- | ----- | ----------------------------------------- |
+  | Service registration | 1     | Jaeger: `rippled` service exists          |
+  | Span existence       | 17    | `expected_spans.json` — 17 span types     |
+  | Span attributes      | 14    | Spans with `required_attributes`          |
+  | Span hierarchies     | 2     | Parent-child relationships (1 skipped)    |
+  | Span durations       | 1     | All spans > 0 and < 60 s                  |
+  | Metric existence     | 26    | `expected_metrics.json` — 26 metric names |
+  | Dashboard loads      | 10    | `expected_metrics.json` — 10 Grafana UIDs |
 
   **Span validation** (queries Jaeger API):
   - Lists all registered operations as diagnostics
-  - Asserts span names from `expected_spans.json` appear in traces
-  - Validates required attributes per span type
-  - Validates parent-child span hierarchies
-  - Asserts all span durations are within bounds (> 0)
+  - Asserts 17 span names from `expected_spans.json` appear in traces
+  - Validates required attributes on the 14 spans that define them
+  - Validates 2 active parent-child span hierarchies (1 skipped — cross-thread)
+  - Asserts all span durations are within bounds (> 0, < 60 s)
 
   **Metric validation** (queries Prometheus API):
   - Lists all metric names as diagnostics (helps debug naming issues)
-  - Every metric in `expected_metrics.json` must have > 0 Prometheus series — absence is a FAIL
-  - Validates: SpanMetrics, StatsD gauges/counters/histograms, overlay traffic, Phase 9 OTLP metrics (nodestore, cache, txq, rpc_method, object_count, load_factor)
+  - All 26 metrics in `expected_metrics.json` must have > 0 Prometheus series — absence is a FAIL
+  - Uses the Prometheus `/api/v1/series` endpoint (not instant queries) to avoid false negatives from stale gauges — beast::insight StatsD gauges only emit on value changes, so a gauge that stabilizes goes stale in Prometheus after ~5 minutes
+  - Validates: 4 SpanMetrics, 6 StatsD gauges, 2 StatsD counters, 3 StatsD histograms, 4 overlay traffic, 7 Phase 9 OTLP metrics (nodestore, cache, txq, rpc_method, object_count, load_factor)
 
   **Dashboard validation**:
   - Queries Grafana API for each of the 10 dashboard UIDs
@@ -214,13 +227,162 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 ---
 
+## What "All 71 Checks" Means — Complete Enumeration
+
+The validation suite (`validate_telemetry.py`) runs exactly **71 checks** grouped into 7 categories. Every item below is validated by name in CI. Nothing is optional — failure of any single check fails the entire suite.
+
+### 1. Service Registration (1 check)
+
+| #   | Check                              | Backend                |
+| --- | ---------------------------------- | ---------------------- |
+| 1   | `rippled` service exists in Jaeger | Jaeger `/api/services` |
+
+### 2. Span Existence (17 checks)
+
+Each span name must appear at least once in Jaeger traces for the `rippled` service.
+
+| #   | Span Name                   | Category    | Config Flag            |
+| --- | --------------------------- | ----------- | ---------------------- |
+| 2   | `rpc.request`               | RPC         | `trace_rpc=1`          |
+| 3   | `rpc.process`               | RPC         | `trace_rpc=1`          |
+| 4   | `rpc.ws_message`            | RPC         | `trace_rpc=1`          |
+| 5   | `rpc.command.*`             | RPC         | `trace_rpc=1`          |
+| 6   | `tx.process`                | Transaction | `trace_transactions=1` |
+| 7   | `tx.receive`                | Transaction | `trace_transactions=1` |
+| 8   | `tx.apply`                  | Transaction | `trace_transactions=1` |
+| 9   | `consensus.proposal.send`   | Consensus   | `trace_consensus=1`    |
+| 10  | `consensus.ledger_close`    | Consensus   | `trace_consensus=1`    |
+| 11  | `consensus.accept`          | Consensus   | `trace_consensus=1`    |
+| 12  | `consensus.validation.send` | Consensus   | `trace_consensus=1`    |
+| 13  | `consensus.accept.apply`    | Consensus   | `trace_consensus=1`    |
+| 14  | `ledger.build`              | Ledger      | `trace_ledger=1`       |
+| 15  | `ledger.validate`           | Ledger      | `trace_ledger=1`       |
+| 16  | `ledger.store`              | Ledger      | `trace_ledger=1`       |
+| 17  | `peer.proposal.receive`     | Peer        | `trace_peer=1`         |
+| 18  | `peer.validation.receive`   | Peer        | `trace_peer=1`         |
+
+### 3. Span Attribute Validation (14 checks)
+
+14 of the 17 spans define `required_attributes`. Each check asserts all listed attributes are present on at least one instance of that span.
+
+| #   | Span Name                   | Required Attributes                                                                                |
+| --- | --------------------------- | -------------------------------------------------------------------------------------------------- |
+| 19  | `rpc.command.*`             | `xrpl.rpc.command`, `xrpl.rpc.version`, `xrpl.rpc.role`, `xrpl.rpc.status`, `xrpl.rpc.duration_ms` |
+| 20  | `tx.process`                | `xrpl.tx.hash`, `xrpl.tx.local`, `xrpl.tx.path`                                                    |
+| 21  | `tx.receive`                | `xrpl.peer.id`, `xrpl.tx.hash`, `xrpl.tx.suppressed`, `xrpl.tx.status`                             |
+| 22  | `tx.apply`                  | `xrpl.ledger.seq`, `xrpl.ledger.tx_count`, `xrpl.ledger.tx_failed`                                 |
+| 23  | `consensus.proposal.send`   | `xrpl.consensus.round`                                                                             |
+| 24  | `consensus.ledger_close`    | `xrpl.consensus.ledger.seq`, `xrpl.consensus.mode`                                                 |
+| 25  | `consensus.accept`          | `xrpl.consensus.proposers`                                                                         |
+| 26  | `consensus.validation.send` | `xrpl.consensus.ledger.seq`, `xrpl.consensus.proposing`                                            |
+| 27  | `consensus.accept.apply`    | `xrpl.consensus.close_time`, `xrpl.consensus.ledger.seq`                                           |
+| 28  | `ledger.build`              | `xrpl.ledger.seq`, `xrpl.ledger.tx_count`, `xrpl.ledger.tx_failed`                                 |
+| 29  | `ledger.validate`           | `xrpl.ledger.seq`, `xrpl.ledger.validations`                                                       |
+| 30  | `ledger.store`              | `xrpl.ledger.seq`                                                                                  |
+| 31  | `peer.proposal.receive`     | `xrpl.peer.id`, `xrpl.peer.proposal.trusted`                                                       |
+| 32  | `peer.validation.receive`   | `xrpl.peer.id`, `xrpl.peer.validation.trusted`                                                     |
+
+### 4. Span Parent-Child Hierarchies (2 checks)
+
+| #   | Parent         | Child           | Status  | Notes                                                                                                                        |
+| --- | -------------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 33  | `rpc.process`  | `rpc.command.*` | Active  | Same thread — always valid                                                                                                   |
+| 34  | `ledger.build` | `tx.apply`      | Active  | Same thread — always valid                                                                                                   |
+| --  | `rpc.request`  | `rpc.process`   | Skipped | Cross-thread: `onRequest` posts to JobQueue coroutine. Span context not propagated across thread boundary. Requires C++ fix. |
+
+### 5. Span Duration Bounds (1 check)
+
+| #   | Check                          | Criteria                                 |
+| --- | ------------------------------ | ---------------------------------------- |
+| 35  | All spans have valid durations | Every span duration > 0 and < 60 seconds |
+
+### 6. Metric Existence (26 checks)
+
+Each metric name must have > 0 series in Prometheus (queried via `/api/v1/series` to avoid stale-gauge false negatives).
+
+| #   | Metric Name                                        | Category         | Source                               |
+| --- | -------------------------------------------------- | ---------------- | ------------------------------------ |
+| 36  | `traces_span_metrics_calls_total`                  | SpanMetrics      | OTel Collector spanmetrics connector |
+| 37  | `traces_span_metrics_duration_milliseconds_bucket` | SpanMetrics      | OTel Collector spanmetrics connector |
+| 38  | `traces_span_metrics_duration_milliseconds_count`  | SpanMetrics      | OTel Collector spanmetrics connector |
+| 39  | `traces_span_metrics_duration_milliseconds_sum`    | SpanMetrics      | OTel Collector spanmetrics connector |
+| 40  | `rippled_LedgerMaster_Validated_Ledger_Age`        | StatsD Gauge     | beast::insight via StatsD UDP        |
+| 41  | `rippled_LedgerMaster_Published_Ledger_Age`        | StatsD Gauge     | beast::insight via StatsD UDP        |
+| 42  | `rippled_State_Accounting_Full_duration`           | StatsD Gauge     | beast::insight via StatsD UDP        |
+| 43  | `rippled_Peer_Finder_Active_Inbound_Peers`         | StatsD Gauge     | beast::insight via StatsD UDP        |
+| 44  | `rippled_Peer_Finder_Active_Outbound_Peers`        | StatsD Gauge     | beast::insight via StatsD UDP        |
+| 45  | `rippled_jobq_job_count`                           | StatsD Gauge     | beast::insight via StatsD UDP        |
+| 46  | `rippled_rpc_requests_total`                       | StatsD Counter   | beast::insight via StatsD UDP        |
+| 47  | `rippled_ledger_fetches_total`                     | StatsD Counter   | beast::insight via StatsD UDP        |
+| 48  | `rippled_rpc_time`                                 | StatsD Histogram | beast::insight via StatsD UDP        |
+| 49  | `rippled_rpc_size`                                 | StatsD Histogram | beast::insight via StatsD UDP        |
+| 50  | `rippled_ios_latency`                              | StatsD Histogram | beast::insight via StatsD UDP        |
+| 51  | `rippled_total_Bytes_In`                           | Overlay Traffic  | beast::insight via StatsD UDP        |
+| 52  | `rippled_total_Bytes_Out`                          | Overlay Traffic  | beast::insight via StatsD UDP        |
+| 53  | `rippled_total_Messages_In`                        | Overlay Traffic  | beast::insight via StatsD UDP        |
+| 54  | `rippled_total_Messages_Out`                       | Overlay Traffic  | beast::insight via StatsD UDP        |
+| 55  | `nodestore_state`                                  | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 56  | `cache_metrics`                                    | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 57  | `txq_metrics`                                      | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 58  | `rpc_method_started_total`                         | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 59  | `rpc_method_finished_total`                        | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 60  | `object_count`                                     | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 61  | `load_factor_metrics`                              | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+
+### 7. Dashboard Loads (10 checks)
+
+Each Grafana dashboard must load successfully and contain at least one panel.
+
+| #   | Dashboard UID                   | Dashboard Name         |
+| --- | ------------------------------- | ---------------------- |
+| 62  | `rippled-rpc-perf`              | RPC Performance        |
+| 63  | `rippled-transactions`          | Transactions           |
+| 64  | `rippled-consensus`             | Consensus              |
+| 65  | `rippled-ledger-ops`            | Ledger Operations      |
+| 66  | `rippled-peer-net`              | Peer Network           |
+| 67  | `rippled-system-node-health`    | System: Node Health    |
+| 68  | `rippled-system-network`        | System: Network        |
+| 69  | `rippled-system-rpc`            | System: RPC            |
+| 70  | `rippled-system-overlay-detail` | System: Overlay Detail |
+| 71  | `rippled-system-ledger-sync`    | System: Ledger Sync    |
+
+---
+
+## Current Status: What Is Working vs. What Is Not
+
+### Working (validated in CI run 23144741908 — 71/71 PASS)
+
+1. **All 17 spans fire** with correct attributes under real workload (RPC + transaction + consensus)
+2. **All 26 metrics exist** in Prometheus with non-zero series counts
+3. **All 10 Grafana dashboards** load and render panels
+4. **All 14 span attribute checks** pass, including `tx.receive` (fixed: default attributes on span creation)
+5. **Both parent-child hierarchies** validate (`rpc.process` -> `rpc.command.*`, `ledger.build` -> `tx.apply`)
+6. **All span durations** are within bounds (> 0, < 60 s)
+7. **RPC load generator** fires 11 command types with < 50% error rate (native WS format)
+8. **Transaction submitter** generates 10 transaction types at configurable TPS
+9. **2-node validator cluster** starts and reaches consensus in CI
+10. **CI workflow** (`telemetry-validation.yml`) runs on push to `pratik/otel-phase10-*` branches and on `workflow_dispatch`
+11. **Validation report** is JSON with exit codes, suitable for CI gating
+
+### Not Working / Not Available in CI / Not Implemented Yet
+
+1. **Performance benchmark suite** (`benchmark.sh`, `collect_system_metrics.sh`) — **not implemented**. Task 10.5 is not started. The exit criterion "Benchmark shows < 3% CPU overhead, < 5MB memory overhead" is **not met**.
+2. **`rpc.request` -> `rpc.process` parent-child hierarchy** — **skipped** (not validated). Cross-thread span context propagation is broken: `onRequest` posts a coroutine to the JobQueue for `processRequest`, but the span context is not forwarded through the `std::function` lambda. Requires a C++ fix to capture and inject the parent span into the coroutine.
+3. **Log-trace correlation validation** (Phase 8 Loki `trace_id` links) — **not included** in the 71 checks. The validation suite does not query Loki. This was listed in "Why This Phase Exists" item 3 but is not covered by the current validation.
+4. **Full StatsD metric coverage** — the validation checks 26 representative metrics, not the full 255+ beast::insight StatsD metrics. Covering all 255+ would require a complete metric enumeration and significantly longer workload runs to trigger every code path.
+5. **Sustained load / backpressure testing** — listed in "Why This Phase Exists" item 6 ("telemetry stack survives sustained load without data loss") but **not implemented**. The current workload runs for ~2 minutes, not long enough to test queue saturation.
+6. **`docs/telemetry-runbook.md` updates** — Task 10.7 mentions adding "Validating Telemetry Stack" and "Performance Benchmarking" sections. The runbook has **not been updated**.
+7. **`09-data-collection-reference.md` updates** — Task 10.7 mentions adding a "Validation" section with expected metric/span counts. This has **not been updated**.
+
+---
+
 ## Exit Criteria
 
 - [x] 2-node validator cluster starts and reaches consensus
 - [x] RPC load generator fires all traced RPC commands at configurable rates
 - [x] Transaction submitter generates 10 transaction types at configurable TPS
-- [ ] Validation suite confirms all spans, attributes, and metrics pass
-- [ ] All 10 Grafana dashboards render data
+- [x] Validation suite confirms all spans, attributes, and metrics pass (71/71 checks)
+- [x] All 10 Grafana dashboards render data
 - [ ] Benchmark shows < 3% CPU overhead, < 5MB memory overhead
 - [x] CI workflow runs validation on telemetry branch changes
 - [x] Validation report output is CI-parseable (JSON with exit codes)
