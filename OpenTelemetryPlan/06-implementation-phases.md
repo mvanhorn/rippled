@@ -815,7 +815,7 @@ flowchart LR
 
 - **Transaction submitter** uses rippled's native WebSocket command format (`{"command": "submit", ...}`) — not JSON-RPC format. Response data lives inside `"result"` with `"status"` at the top level.
 - **Node config** requires `[signing_support] true` for server-side signing, and `[ips]` (not `[ips_fixed]`) to ensure peer connections count in `Peer_Finder_Active_*` metrics.
-- **Metric validation** supports two tiers: required `"metrics"` (failure = FAIL) and `"optional_metrics"` (failure = PASS with warning) for environment-dependent metrics like `ios_latency` which only fires when I/O thread latency >= 10ms.
+- **Metric validation** requires every metric in `expected_metrics.json` to have > 0 Prometheus series. The workload generators must produce enough load to trigger all metrics, including `ios_latency` (I/O thread latency >= 10ms threshold).
 
 ### Tasks
 

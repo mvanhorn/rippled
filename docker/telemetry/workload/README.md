@@ -126,17 +126,12 @@ python3 tx_submitter.py --endpoint ws://localhost:6006 \
 
 ### validate_telemetry.py
 
-Automated validation that all expected telemetry data exists:
+Automated validation that all expected telemetry data exists. Every metric and span is required — if it doesn't fire, the validation fails.
 
 - **Span validation**: All span types from `expected_spans.json` with required attributes and parent-child hierarchies
-- **Metric validation**: SpanMetrics, StatsD gauges/counters/histograms, Phase 9 OTLP metrics from `expected_metrics.json`
-- **Log-trace correlation**: trace_id/span_id in Loki logs (optional, requires Loki)
+- **Metric validation**: All metrics from `expected_metrics.json` — SpanMetrics, StatsD gauges/counters/histograms, Phase 9 OTLP metrics. Every listed metric must have > 0 series.
+- **Log-trace correlation**: trace_id/span_id in Loki logs (requires Loki)
 - **Dashboard validation**: All 10 Grafana dashboards load with panels
-
-Metrics in `expected_metrics.json` support two tiers:
-
-- `"metrics"`: Required — absence causes a FAIL
-- `"optional_metrics"`: Environment-dependent — absence produces a PASS with a warning (e.g., `ios_latency` only fires when I/O thread latency >= 10ms)
 
 ```bash
 # Run all validations
@@ -209,7 +204,7 @@ The validation runs as a GitHub Actions workflow (`.github/workflows/telemetry-v
 | File                    | Purpose                                                       |
 | ----------------------- | ------------------------------------------------------------- |
 | `expected_spans.json`   | Span inventory (names, attributes, hierarchies, config flags) |
-| `expected_metrics.json` | Metric inventory with `metrics` and `optional_metrics` lists  |
+| `expected_metrics.json` | Metric inventory — every listed metric must be present        |
 | `test_accounts.json`    | Test account roles (keys generated at runtime)                |
 | `requirements.txt`      | Python dependencies                                           |
 
@@ -219,12 +214,12 @@ The validation runs as a GitHub Actions workflow (`.github/workflows/telemetry-v
 {
   "category_name": {
     "description": "Human-readable description.",
-    "metrics": ["required_metric_1", "required_metric_2"],
-    "optional_metrics": ["env_dependent_metric"],
-    "optional_note": "Explanation of why these metrics may not fire."
+    "metrics": ["metric_1", "metric_2"]
   }
 }
 ```
+
+Every metric listed must produce > 0 Prometheus series during the validation run. If a metric doesn't fire, the workload generators need to produce enough load to trigger it.
 
 ### expected_spans.json Format
 

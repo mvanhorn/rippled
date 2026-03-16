@@ -463,18 +463,6 @@ async def validate_metrics(
                 session, prometheus_url, metric_name, category_key, report
             )
 
-        # Optional metrics: presence is checked but missing ones don't fail.
-        optional = category_data.get("optional_metrics", [])
-        for metric_name in optional:
-            await _check_prometheus_metric(
-                session,
-                prometheus_url,
-                metric_name,
-                category_key,
-                report,
-                required=False,
-            )
-
 
 async def _check_prometheus_metric(
     session: aiohttp.ClientSession,
@@ -482,8 +470,6 @@ async def _check_prometheus_metric(
     metric_name: str,
     category: str,
     report: ValidationReport,
-    *,
-    required: bool = True,
 ) -> None:
     """Query Prometheus for a specific metric and check it exists.
 
@@ -493,8 +479,6 @@ async def _check_prometheus_metric(
         metric_name:    Prometheus metric name.
         category:       Metric category for the report.
         report:         ValidationReport to accumulate results.
-        required:       If False, missing metrics produce a PASS with a warning
-                        instead of a FAIL (for environment-dependent metrics).
     """
     try:
         params = {"query": metric_name}
@@ -502,24 +486,17 @@ async def _check_prometheus_metric(
             data = await resp.json()
             results = data.get("data", {}).get("result", [])
             series_count = len(results)
-
-            if series_count > 0:
-                passed = True
-                message = f"{metric_name}: {series_count} series"
-            elif not required:
-                passed = True
-                message = f"{metric_name}: 0 series (optional — not emitted)"
-            else:
-                passed = False
-                message = f"{metric_name}: 0 series (expected > 0)"
-
             report.add(
                 CheckResult(
                     name=f"metric.{category}.{metric_name}",
                     category="metric",
-                    passed=passed,
-                    message=message,
-                    details={"series_count": series_count, "required": required},
+                    passed=series_count > 0,
+                    message=(
+                        f"{metric_name}: {series_count} series"
+                        if series_count > 0
+                        else f"{metric_name}: 0 series (expected > 0)"
+                    ),
+                    details={"series_count": series_count},
                 )
             )
     except Exception as exc:

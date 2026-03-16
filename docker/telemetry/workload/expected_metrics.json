@@ -40,9 +40,7 @@
   },
   "statsd_histograms": {
     "description": "beast::insight timers/histograms emitted via StatsD UDP.",
-    "metrics": ["rippled_rpc_time", "rippled_rpc_size"],
-    "optional_metrics": ["rippled_ios_latency"],
-    "optional_note": "ios_latency only emits when I/O thread latency >= 10ms; may not trigger on fast CI runners."
+    "metrics": ["rippled_rpc_time", "rippled_rpc_size", "rippled_ios_latency"]
   },
   "overlay_traffic": {
     "description": "Overlay traffic metrics (subset — full list has 45+ categories).",

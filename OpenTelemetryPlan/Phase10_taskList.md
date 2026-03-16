@@ -119,8 +119,7 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
   **Metric validation** (queries Prometheus API):
   - Lists all metric names as diagnostics (helps debug naming issues)
-  - Checks all `"metrics"` entries in `expected_metrics.json` — absence causes FAIL
-  - Checks `"optional_metrics"` entries — absence produces PASS with warning (for environment-dependent metrics like `ios_latency` which only fires when I/O thread latency >= 10ms)
+  - Every metric in `expected_metrics.json` must have > 0 Prometheus series — absence is a FAIL
   - Validates: SpanMetrics, StatsD gauges/counters/histograms, overlay traffic, Phase 9 OTLP metrics (nodestore, cache, txq, rpc_method, object_count, load_factor)
 
   **Dashboard validation**:
@@ -133,7 +132,7 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 - `docker/telemetry/workload/validate_telemetry.py`
 - `docker/telemetry/workload/expected_spans.json` (span inventory with attributes and hierarchies)
-- `docker/telemetry/workload/expected_metrics.json` (metric inventory with required and optional tiers)
+- `docker/telemetry/workload/expected_metrics.json` (metric inventory — all required)
 
 ---
 
@@ -220,7 +219,7 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 - [x] 2-node validator cluster starts and reaches consensus
 - [x] RPC load generator fires all traced RPC commands at configurable rates
 - [x] Transaction submitter generates 10 transaction types at configurable TPS
-- [ ] Validation suite confirms all spans, attributes, and metrics pass (required + optional)
+- [ ] Validation suite confirms all spans, attributes, and metrics pass
 - [ ] All 10 Grafana dashboards render data
 - [ ] Benchmark shows < 3% CPU overhead, < 5MB memory overhead
 - [x] CI workflow runs validation on telemetry branch changes
