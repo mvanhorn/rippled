@@ -80,3 +80,4 @@ DerivedData
 
 # clangd cache
 /.cache
+docker/telemetry/workload/__pycache__/
