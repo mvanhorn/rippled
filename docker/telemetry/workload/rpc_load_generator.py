@@ -133,67 +133,59 @@ class LoadStats:
 
 
 def build_rpc_request(command: str) -> dict[str, Any]:
-    """Build a JSON-RPC request object for the given command.
+    """Build a native WebSocket command request for the given command.
+
+    Uses rippled's native WS format (``{"command": ...}``) with flat
+    parameters, NOT the JSON-RPC format (``{"method": ..., "params": [...]}``).
 
     Args:
         command: The rippled RPC command name.
 
     Returns:
-        A dict representing the JSON-RPC request body.
+        A dict representing the native WebSocket request body.
     """
-    base: dict[str, Any] = {"method": command, "params": [{}]}
+    req: dict[str, Any] = {"command": command}
 
-    if command == "server_info":
-        pass  # No params needed.
-    elif command == "fee":
+    if command in ("server_info", "fee"):
         pass  # No params needed.
     elif command == "account_info":
-        base["params"] = [{"account": GENESIS_ACCOUNT}]
+        req["account"] = GENESIS_ACCOUNT
     elif command == "account_lines":
-        base["params"] = [{"account": GENESIS_ACCOUNT}]
+        req["account"] = GENESIS_ACCOUNT
     elif command == "account_objects":
-        base["params"] = [{"account": GENESIS_ACCOUNT, "limit": 10}]
+        req["account"] = GENESIS_ACCOUNT
+        req["limit"] = 10
     elif command == "ledger":
-        base["params"] = [{"ledger_index": "validated"}]
+        req["ledger_index"] = "validated"
     elif command == "ledger_data":
-        base["params"] = [{"ledger_index": "validated", "limit": 5}]
+        req["ledger_index"] = "validated"
+        req["limit"] = 5
     elif command == "tx":
-        # Use a dummy hash — will return "txnNotFound" but still exercises
+        # Use a dummy hash — returns "txnNotFound" error but still exercises
         # the full RPC span pipeline (rpc.request -> rpc.process -> rpc.command.tx).
-        base["params"] = [{"transaction": "0" * 64, "binary": False}]
+        req["transaction"] = "0" * 64
+        req["binary"] = False
     elif command == "account_tx":
-        base["params"] = [
-            {
-                "account": GENESIS_ACCOUNT,
-                "ledger_index_min": -1,
-                "ledger_index_max": -1,
-                "limit": 5,
-            }
-        ]
+        req["account"] = GENESIS_ACCOUNT
+        req["ledger_index_min"] = -1
+        req["ledger_index_max"] = -1
+        req["limit"] = 5
     elif command == "book_offers":
-        base["params"] = [
-            {
-                "taker_pays": {"currency": "XRP"},
-                "taker_gets": {
-                    "currency": "USD",
-                    "issuer": GENESIS_ACCOUNT,
-                },
-                "limit": 5,
-            }
-        ]
+        req["taker_pays"] = {"currency": "XRP"}
+        req["taker_gets"] = {
+            "currency": "USD",
+            "issuer": GENESIS_ACCOUNT,
+        }
+        req["limit"] = 5
     elif command == "amm_info":
         # AMM may not exist — the span is still created on the server side.
-        base["params"] = [
-            {
-                "asset": {"currency": "XRP"},
-                "asset2": {
-                    "currency": "USD",
-                    "issuer": GENESIS_ACCOUNT,
-                },
-            }
-        ]
+        req["asset"] = {"currency": "XRP"}
+        req["asset2"] = {
+            "currency": "USD",
+            "issuer": GENESIS_ACCOUNT,
+        }
 
-    return base
+    return req
 
 
 def choose_command(weights: dict[str, int]) -> str:
@@ -246,7 +238,9 @@ async def send_rpc(
         raw = await asyncio.wait_for(ws.recv(), timeout=10.0)
         latency = time.monotonic() - t0
         response = json.loads(raw)
-        success = "result" in response
+        # Native WS responses have {"status": "success", "result": {...}}
+        # or {"status": "error", "error": "...", "error_message": "..."}.
+        success = response.get("status") == "success"
         stats.record(command, latency, success)
     except (asyncio.TimeoutError, websockets.exceptions.WebSocketException) as exc:
         latency = time.monotonic() - t0

@@ -75,7 +75,9 @@ Orchestrates the complete validation pipeline. Starts the telemetry stack, start
 
 ### rpc_load_generator.py
 
-Generates RPC traffic matching realistic production distribution:
+Generates RPC traffic matching realistic production distribution. Uses
+rippled's **native WebSocket command format** (`{"command": ...}`) with flat
+parameters — the same format as `tx_submitter.py`.
 
 - 40% health checks (server_info, fee)
 - 30% wallet queries (account_info, account_lines, account_objects)
@@ -129,7 +131,7 @@ python3 tx_submitter.py --endpoint ws://localhost:6006 \
 Automated validation that all expected telemetry data exists. Every metric and span is required — if it doesn't fire, the validation fails.
 
 - **Span validation**: All span types from `expected_spans.json` with required attributes and parent-child hierarchies
-- **Metric validation**: All metrics from `expected_metrics.json` — SpanMetrics, StatsD gauges/counters/histograms, Phase 9 OTLP metrics. Every listed metric must have > 0 series.
+- **Metric validation**: All metrics from `expected_metrics.json` — SpanMetrics, StatsD gauges/counters/histograms, Phase 9 OTLP metrics. Every listed metric must have > 0 series. Uses the Prometheus `/api/v1/series` endpoint (not instant queries) to avoid false negatives from stale gauges.
 - **Log-trace correlation**: trace_id/span_id in Loki logs (requires Loki)
 - **Dashboard validation**: All 10 Grafana dashboards load with panels
 
@@ -243,3 +245,10 @@ The orchestrator (`run-full-validation.sh`) generates node configs with:
 - `[telemetry] enabled=1` with all trace categories (`trace_rpc`, `trace_consensus`, `trace_transactions`)
 - `[signing_support] true` — required for `tx_submitter.py` to submit signed transactions via WebSocket
 - `[ips]` (not `[ips_fixed]`) — ensures peer connections are counted in `Peer_Finder_Active_Inbound/Outbound_Peers` metrics (fixed peers are excluded from these counters by design)
+
+## StatsD Gauge Behaviour
+
+Beast::insight StatsD gauges only emit when their value _changes_ from the previous sample. This can cause two problems in the validation environment:
+
+1. **Initial-zero gauges** — if a gauge value is 0 from startup and never changes, the gauge would never emit. To address this, `StatsDGaugeImpl` initializes `m_dirty = true`, ensuring the first flush always emits the initial value.
+2. **Stale gauges** — once a gauge stabilizes (e.g., peer count stays at 1), it stops emitting new data points. Prometheus marks it stale after ~5 minutes. The validation script uses the Prometheus `/api/v1/series` endpoint instead of instant queries to catch such gauges.

@@ -481,10 +481,18 @@ async def _check_prometheus_metric(
         report:         ValidationReport to accumulate results.
     """
     try:
-        params = {"query": metric_name}
-        async with session.get(f"{prometheus_url}/api/v1/query", params=params) as resp:
+        # Use the /api/v1/series endpoint instead of an instant query.
+        # Beast::insight StatsD gauges only mark dirty on value *changes*,
+        # so a gauge that stabilizes (e.g. peer count stays at 1) may go
+        # stale in Prometheus and disappear from instant queries.  The
+        # series endpoint returns any metric that existed in the window,
+        # regardless of staleness.
+        params: dict[str, str] = {"match[]": metric_name}
+        async with session.get(
+            f"{prometheus_url}/api/v1/series", params=params
+        ) as resp:
             data = await resp.json()
-            results = data.get("data", {}).get("result", [])
+            results = data.get("data", [])
             series_count = len(results)
             report.add(
                 CheckResult(

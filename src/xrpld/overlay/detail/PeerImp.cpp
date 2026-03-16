@@ -1272,6 +1272,11 @@ PeerImp::handleTransaction(
 {
     XRPL_TRACE_TX(app_.getTelemetry(), "tx.receive");
     XRPL_TRACE_SET_ATTR("xrpl.peer.id", static_cast<int64_t>(id_));
+    // Set defaults for conditional attributes so they are always present
+    // on the span.  The suppressed path (line 1328) overrides these when
+    // the transaction has already been seen via HashRouter.
+    XRPL_TRACE_SET_ATTR("xrpl.tx.suppressed", false);
+    XRPL_TRACE_SET_ATTR("xrpl.tx.status", "new");
 
     XRPL_ASSERT(eraseTxQueue != batch, ("xrpl::PeerImp::handleTransaction : valid inputs"));
     if (tracking_.load() == Tracking::diverged)
