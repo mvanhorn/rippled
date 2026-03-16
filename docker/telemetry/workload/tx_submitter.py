@@ -142,11 +142,12 @@ async def ws_request(
     command: str,
     params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Send a native WebSocket command and return the response.
+    """Send a native WebSocket command and return the result payload.
 
     Uses rippled's native WebSocket format (``command`` key with flat
-    parameters) rather than the JSON-RPC ``method``/``params`` format.
-    The native format returns a flat response without a ``result`` wrapper.
+    parameters).  The response has ``status`` at the top level and the
+    actual data payload inside ``result``.  This helper unwraps the
+    ``result`` dict so callers can read fields directly.
 
     Args:
         ws:      Open WebSocket connection.
@@ -154,7 +155,7 @@ async def ws_request(
         params:  Optional flat parameter dict merged into the request.
 
     Returns:
-        The parsed JSON response dict (flat — fields at top level).
+        The inner ``result`` dict from the response.
 
     Raises:
         RuntimeError: If the request fails or times out.
@@ -164,7 +165,18 @@ async def ws_request(
         request.update(params)
     await ws.send(json.dumps(request))
     raw = await asyncio.wait_for(ws.recv(), timeout=30.0)
-    return json.loads(raw)
+    resp = json.loads(raw)
+
+    # WS command format: {"status": "success", "result": {...}, "type": "response"}
+    # On error: {"status": "error", "error": "...", "error_message": "..."}
+    if resp.get("status") == "error":
+        logger.warning(
+            "%s error: %s — %s",
+            command,
+            resp.get("error", "unknown"),
+            resp.get("error_message", ""),
+        )
+    return resp.get("result", resp)
 
 
 async def create_account(ws: websockets.WebSocketClientProtocol, name: str) -> Account:
@@ -177,15 +189,15 @@ async def create_account(ws: websockets.WebSocketClientProtocol, name: str) -> A
     Returns:
         An Account instance with the generated keypair.
     """
-    resp = await ws_request(ws, "wallet_propose")
-    if resp.get("status") != "success":
+    result = await ws_request(ws, "wallet_propose")
+    if "account_id" not in result:
         raise RuntimeError(
-            f"wallet_propose failed: {json.dumps(resp, indent=None)[:300]}"
+            f"wallet_propose failed: {json.dumps(result, indent=None)[:300]}"
         )
     return Account(
         name=name,
-        account=resp["account_id"],
-        seed=resp["master_seed"],
+        account=result["account_id"],
+        seed=result["master_seed"],
     )
 
 
