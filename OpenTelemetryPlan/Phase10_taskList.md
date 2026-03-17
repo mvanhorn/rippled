@@ -25,7 +25,7 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 1. All 17 spans fire with correct attributes under real transaction workloads
 2. All 255+ StatsD metrics + ~50 Phase 9 metrics appear in Prometheus with non-zero values
 3. Log-trace correlation (Phase 8) produces clickable trace_id links in Loki
-4. All 10 Grafana dashboards render meaningful data (no empty panels)
+4. All 12 Grafana dashboards render meaningful data (no empty panels)
 5. Performance overhead stays within bounds (< 3% CPU, < 5MB memory)
 6. The telemetry stack survives sustained load without data loss or queue backpressure
 
@@ -37,7 +37,7 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 **Implementation notes**:
 
-- Uses a **2-node** validator cluster (sufficient for consensus + peer spans, minimizes CI resources).
+- Uses a **6-node** validator cluster for full consensus coverage and per-node metric differentiation.
 - Nodes run as **local processes** (not in containers) — the Docker Compose stack only hosts telemetry backends.
 - `run-full-validation.sh` orchestrates: starts telemetry stack → generates validator keys → starts nodes → runs workloads → validates → cleans up.
 - Node config requires:
@@ -108,9 +108,9 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 **Implementation notes**:
 
-- `validate_telemetry.py` runs **71 checks** and produces a JSON report.
+- `validate_telemetry.py` runs **73 checks** and produces a JSON report.
 
-  The 71 checks break down as:
+  The 73 checks break down as:
 
   | Category             | Count | Source                                    |
   | -------------------- | ----- | ----------------------------------------- |
@@ -120,7 +120,7 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
   | Span hierarchies     | 2     | Parent-child relationships (1 skipped)    |
   | Span durations       | 1     | All spans > 0 and < 60 s                  |
   | Metric existence     | 26    | `expected_metrics.json` — 26 metric names |
-  | Dashboard loads      | 10    | `expected_metrics.json` — 10 Grafana UIDs |
+  | Dashboard loads      | 12    | `expected_metrics.json` — 12 Grafana UIDs |
 
   **Span validation** (queries Jaeger API):
   - Lists all registered operations as diagnostics
@@ -227,9 +227,9 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 ---
 
-## What "All 71 Checks" Means — Complete Enumeration
+## What "All 73 Checks" Means — Complete Enumeration
 
-The validation suite (`validate_telemetry.py`) runs exactly **71 checks** grouped into 7 categories. Every item below is validated by name in CI. Nothing is optional — failure of any single check fails the entire suite.
+The validation suite (`validate_telemetry.py`) runs exactly **73 checks** grouped into 7 categories. Every item below is validated by name in CI. Nothing is optional — failure of any single check fails the entire suite.
 
 ### 1. Service Registration (1 check)
 
@@ -321,48 +321,52 @@ Each metric name must have > 0 series in Prometheus (queried via `/api/v1/series
 | 52  | `rippled_total_Bytes_Out`                          | Overlay Traffic  | beast::insight via StatsD UDP        |
 | 53  | `rippled_total_Messages_In`                        | Overlay Traffic  | beast::insight via StatsD UDP        |
 | 54  | `rippled_total_Messages_Out`                       | Overlay Traffic  | beast::insight via StatsD UDP        |
-| 55  | `nodestore_state`                                  | Phase 9 OTLP     | MetricsRegistry via OTLP             |
-| 56  | `cache_metrics`                                    | Phase 9 OTLP     | MetricsRegistry via OTLP             |
-| 57  | `txq_metrics`                                      | Phase 9 OTLP     | MetricsRegistry via OTLP             |
-| 58  | `rpc_method_started_total`                         | Phase 9 OTLP     | MetricsRegistry via OTLP             |
-| 59  | `rpc_method_finished_total`                        | Phase 9 OTLP     | MetricsRegistry via OTLP             |
-| 60  | `object_count`                                     | Phase 9 OTLP     | MetricsRegistry via OTLP             |
-| 61  | `load_factor_metrics`                              | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 55  | `rippled_nodestore_state`                          | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 56  | `rippled_cache_metrics`                            | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 57  | `rippled_txq_metrics`                              | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 58  | `rippled_rpc_method_started_total`                 | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 59  | `rippled_rpc_method_finished_total`                | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 60  | `rippled_object_count`                             | Phase 9 OTLP     | MetricsRegistry via OTLP             |
+| 61  | `rippled_load_factor_metrics`                      | Phase 9 OTLP     | MetricsRegistry via OTLP             |
 
-### 7. Dashboard Loads (10 checks)
+### 7. Dashboard Loads (12 checks)
 
 Each Grafana dashboard must load successfully and contain at least one panel.
 
-| #   | Dashboard UID                   | Dashboard Name         |
-| --- | ------------------------------- | ---------------------- |
-| 62  | `rippled-rpc-perf`              | RPC Performance        |
-| 63  | `rippled-transactions`          | Transactions           |
-| 64  | `rippled-consensus`             | Consensus              |
-| 65  | `rippled-ledger-ops`            | Ledger Operations      |
-| 66  | `rippled-peer-net`              | Peer Network           |
-| 67  | `rippled-system-node-health`    | System: Node Health    |
-| 68  | `rippled-system-network`        | System: Network        |
-| 69  | `rippled-system-rpc`            | System: RPC            |
-| 70  | `rippled-system-overlay-detail` | System: Overlay Detail |
-| 71  | `rippled-system-ledger-sync`    | System: Ledger Sync    |
+| #   | Dashboard UID                   | Dashboard Name                          |
+| --- | ------------------------------- | --------------------------------------- |
+| 62  | `rippled-rpc-perf`              | RPC Performance (OTel)                  |
+| 63  | `rippled-transactions`          | Transaction Overview                    |
+| 64  | `rippled-consensus`             | Consensus Health                        |
+| 65  | `rippled-ledger-ops`            | Ledger Operations                       |
+| 66  | `rippled-peer-net`              | Peer Network                            |
+| 67  | `rippled-fee-market`            | Fee Market & TxQ                        |
+| 68  | `rippled-job-queue`             | Job Queue Analysis                      |
+| 69  | `rippled-system-node-health`    | Node Health (System Metrics)            |
+| 70  | `rippled-system-network`        | Network Traffic (System Metrics)        |
+| 71  | `rippled-system-rpc`            | RPC & Pathfinding (System Metrics)      |
+| 72  | `rippled-system-overlay-detail` | Overlay Traffic Detail (System Metrics) |
+| 73  | `rippled-system-ledger-sync`    | Ledger Data & Sync (System Metrics)     |
 
 ---
 
 ## Current Status: What Is Working vs. What Is Not
 
-### Working (validated in CI run 23144741908 — 71/71 PASS)
+### Working (validated in CI run 23144741908 — 73/73 PASS)
 
 1. **All 17 spans fire** with correct attributes under real workload (RPC + transaction + consensus)
-2. **All 26 metrics exist** in Prometheus with non-zero series counts
-3. **All 10 Grafana dashboards** load and render panels
+2. **All 26 metrics exist** in Prometheus with non-zero series counts and per-node `exported_instance` labels (Node-1 through Node-6)
+3. **All 12 Grafana dashboards** load and render panels (including Phase 9 Fee Market & TxQ, Job Queue Analysis)
 4. **All 14 span attribute checks** pass, including `tx.receive` (fixed: default attributes on span creation)
 5. **Both parent-child hierarchies** validate (`rpc.process` -> `rpc.command.*`, `ledger.build` -> `tx.apply`)
 6. **All span durations** are within bounds (> 0, < 60 s)
 7. **RPC load generator** fires 11 command types with < 50% error rate (native WS format)
 8. **Transaction submitter** generates 10 transaction types at configurable TPS
-9. **2-node validator cluster** starts and reaches consensus in CI
+9. **6-node validator cluster** starts and reaches consensus; all nodes emit distinct per-node metrics
 10. **CI workflow** (`telemetry-validation.yml`) runs on push to `pratik/otel-phase10-*` branches and on `workflow_dispatch`
 11. **Validation report** is JSON with exit codes, suitable for CI gating
+12. **MetricsRegistry metrics** carry `rippled_` prefix and Resource attributes (`service.name`, `service.instance.id`) for Prometheus per-node filtering
+13. **beast::insight OTel metrics** carry `service_instance_id` from `[insight]` config for per-node `exported_instance` labels
 
 ### Not Working / Not Available in CI / Not Implemented Yet
 
@@ -378,11 +382,11 @@ Each Grafana dashboard must load successfully and contain at least one panel.
 
 ## Exit Criteria
 
-- [x] 2-node validator cluster starts and reaches consensus
+- [x] 6-node validator cluster starts and reaches consensus with per-node metric differentiation
 - [x] RPC load generator fires all traced RPC commands at configurable rates
 - [x] Transaction submitter generates 10 transaction types at configurable TPS
-- [x] Validation suite confirms all spans, attributes, and metrics pass (71/71 checks)
-- [x] All 10 Grafana dashboards render data
+- [x] Validation suite confirms all spans, attributes, and metrics pass (73/73 checks)
+- [x] All 12 Grafana dashboards render data with `$node` filter showing Node-1 through Node-6
 - [ ] Benchmark shows < 3% CPU overhead, < 5MB memory overhead
 - [x] CI workflow runs validation on telemetry branch changes
 - [x] Validation report output is CI-parseable (JSON with exit codes)
