@@ -562,8 +562,8 @@ OTelGaugeImpl::OTelGaugeImpl(
 {
     // Register the async callback that the SDK calls during collection.
     // The callback reads the atomic value and reports it to the observer.
-    // We capture a weak_ptr to avoid preventing destruction.
-    auto weakSelf = std::weak_ptr<GaugeImpl>(shared_from_this());
+    // The raw `this` pointer is safe here because RemoveCallback() is
+    // called in the destructor before `this` becomes invalid.
     m_gauge->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* state) {
             auto* self = static_cast<OTelGaugeImpl*>(state);
