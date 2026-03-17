@@ -64,6 +64,12 @@ isRounded(Asset const& asset, Number const& value, std::int32_t scale)
         roundToAsset(asset, value, scale, Number::upward);
 }
 
+[[nodiscard]] bool
+isPaymentLate(ReadView const& view, SLE::const_ref loanSle)
+{
+    return hasExpired(view, loanSle->at(sfNextPaymentDueDate));
+}
+
 namespace detail {
 
 void
@@ -675,11 +681,6 @@ computeLatePayment(
     TenthBips16 managementFeeRate,
     beast::Journal j)
 {
-    // Check if the due date has passed. If not, reject the payment as
-    // being too soon
-    if (!hasExpired(view, nextDueDate))
-        return Unexpected(tecTOO_SOON);
-
     // Calculate the penalty interest based on how long the payment is overdue.
     auto const latePaymentInterest = loanLatePaymentInterest(
         principalOutstanding, lateInterestRate, view.parentCloseTime(), nextDueDate);
@@ -1612,7 +1613,7 @@ loanMakePayment(
 
     // -------------------------------------------------------------
     // A late payment not flagged as late overrides all other options.
-    if (paymentType != LoanPaymentType::late && hasExpired(view, nextDueDateProxy))
+    if (paymentType != LoanPaymentType::late && isPaymentLate(view, loan))
     {
         // If the payment is late, and the late flag was not set, it's not
         // valid
@@ -1701,6 +1702,10 @@ loanMakePayment(
     // late payment handling
     if (paymentType == LoanPaymentType::late)
     {
+        // Check if the due date has passed. If not, reject the payment as being too soon
+        if (!isPaymentLate(view, loan))
+            return Unexpected(tecTOO_SOON);
+
         TenthBips32 const lateInterestRate{loan->at(sfLateInterestRate)};
         Number const latePaymentFee = loan->at(sfLatePaymentFee);
 
