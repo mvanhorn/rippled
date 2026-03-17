@@ -300,23 +300,6 @@ These metrics serve multiple external consumer categories identified during rese
 
 ---
 
-## Effort Summary
-
-| Task | Description                              | Effort | Risk   |
-| ---- | ---------------------------------------- | ------ | ------ |
-| 9.1  | NodeStore I/O metrics                    | 1d     | Low    |
-| 9.2  | Cache hit rate metrics + MetricsRegistry | 2d     | Medium |
-| 9.3  | TxQ metrics                              | 1d     | Low    |
-| 9.4  | PerfLog per-RPC metrics                  | 1.5d   | Medium |
-| 9.5  | PerfLog per-job metrics                  | 1d     | Low    |
-| 9.6  | Counted object instance metrics          | 0.5d   | Low    |
-| 9.7  | Fee escalation & load factor metrics     | 0.5d   | Low    |
-| 9.8  | New Grafana dashboards                   | 2d     | Low    |
-| 9.9  | Update documentation                     | 1d     | Low    |
-| 9.10 | Integration tests                        | 1.5d   | Medium |
-
-**Total Effort**: 12 days
-
 ## Exit Criteria
 
 - [ ] All ~50 new metrics visible in Prometheus via OTLP pipeline

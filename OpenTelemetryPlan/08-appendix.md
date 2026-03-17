@@ -175,7 +175,7 @@ This guide maps Phase 9–11 content to its location across the documentation.
 | Content                         | Location                                                                 |
 | ------------------------------- | ------------------------------------------------------------------------ |
 | Plan & architecture             | [06-implementation-phases.md §6.8.2](./06-implementation-phases.md)      |
-| Task list (10 tasks, 12d)       | [Phase9_taskList.md](./Phase9_taskList.md)                               |
+| Task list (10 tasks)            | [Phase9_taskList.md](./Phase9_taskList.md)                               |
 | Future metric definitions (~50) | [09-data-collection-reference.md §5b](./09-data-collection-reference.md) |
 | New class: `MetricsRegistry`    | `src/xrpld/telemetry/MetricsRegistry.h/.cpp` (planned)                   |
 | New dashboards                  | `rippled-fee-market`, `rippled-job-queue` (planned)                      |
@@ -184,13 +184,13 @@ This guide maps Phase 9–11 content to its location across the documentation.
 
 ### Phase 10: Synthetic Workload Generation & Telemetry Validation
 
-| Content                  | Location                                                                 |
-| ------------------------ | ------------------------------------------------------------------------ |
-| Plan & architecture      | [06-implementation-phases.md §6.8.3](./06-implementation-phases.md)      |
-| Task list (7 tasks, 10d) | [Phase10_taskList.md](./Phase10_taskList.md)                             |
-| Validation inventory     | [09-data-collection-reference.md §5c](./09-data-collection-reference.md) |
-| Test harness             | `docker/telemetry/docker-compose.workload.yaml` (planned)                |
-| CI workflow              | `.github/workflows/telemetry-validation.yml` (planned)                   |
+| Content              | Location                                                                 |
+| -------------------- | ------------------------------------------------------------------------ |
+| Plan & architecture  | [06-implementation-phases.md §6.8.3](./06-implementation-phases.md)      |
+| Task list (7 tasks)  | [Phase10_taskList.md](./Phase10_taskList.md)                             |
+| Validation inventory | [09-data-collection-reference.md §5c](./09-data-collection-reference.md) |
+| Test harness         | `docker/telemetry/docker-compose.workload.yaml` (planned)                |
+| CI workflow          | `.github/workflows/telemetry-validation.yml` (planned)                   |
 
 **Validates**: 16 spans, 22 attributes, 300+ metrics, 10 dashboards, log-trace correlation.
 
@@ -199,32 +199,13 @@ This guide maps Phase 9–11 content to its location across the documentation.
 | Content                           | Location                                                                 |
 | --------------------------------- | ------------------------------------------------------------------------ |
 | Plan & architecture               | [06-implementation-phases.md §6.8.4](./06-implementation-phases.md)      |
-| Task list (11 tasks, 15d)         | [Phase11_taskList.md](./Phase11_taskList.md)                             |
+| Task list (11 tasks)              | [Phase11_taskList.md](./Phase11_taskList.md)                             |
 | External metric definitions (~30) | [09-data-collection-reference.md §5d](./09-data-collection-reference.md) |
 | Custom OTel Collector receiver    | `docker/telemetry/otel-rippled-receiver/` (planned)                      |
 | Prometheus alerting rules (11)    | [09-data-collection-reference.md §5d](./09-data-collection-reference.md) |
 | New dashboards (4)                | Validator Health, Network Topology, Fee Market (External), DEX & AMM     |
 
 **Consumer categories**: Exchanges, Payment Processors, DeFi/AMM, NFT Marketplaces, Analytics Providers, Wallets, Compliance, Academic Researchers, Institutional Custody, CBDC Bridge Operators.
-
----
-
-## 8.7 Effort Summary (All Phases)
-
-| Phase | Description                      | Effort     | Status             |
-| ----- | -------------------------------- | ---------- | ------------------ |
-| 1     | Core SDK integration             | 5d         | Active             |
-| 2     | RPC tracing                      | 5d         | Active             |
-| 3     | Peer & consensus tracing         | 8d         | Active             |
-| 4     | Transaction lifecycle            | 7d         | Active             |
-| 5     | Ledger & advanced                | 7.1d       | Active             |
-| 6     | StatsD → OTel bridge             | 8d         | Active             |
-| 7     | Native OTel metrics              | 15d        | Active             |
-| 8     | Log-trace correlation            | 10d        | Active             |
-| 9     | Internal metric gap fill         | 12d        | Future Enhancement |
-| 10    | Workload generation & validation | 10d        | Future Enhancement |
-| 11    | Third-party data pipelines       | 15d        | Future Enhancement |
-|       | **Total**                        | **102.1d** |                    |
 
 ---
 

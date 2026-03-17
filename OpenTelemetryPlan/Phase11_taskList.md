@@ -439,24 +439,6 @@ This phase addresses the cross-cutting gap identified during research: **rippled
 
 ---
 
-## Effort Summary
-
-| Task  | Description                          | Effort | Risk   |
-| ----- | ------------------------------------ | ------ | ------ |
-| 11.1  | OTel Collector receiver scaffold     | 1.5d   | Medium |
-| 11.2  | server_info / server_state collector | 2d     | Low    |
-| 11.3  | get_counts collector                 | 1.5d   | Low    |
-| 11.4  | Peer topology collector              | 1.5d   | Medium |
-| 11.5  | Validator & amendment collector      | 1d     | Low    |
-| 11.6  | Fee & TxQ collector                  | 0.5d   | Low    |
-| 11.7  | DEX & AMM collector (optional)       | 1.5d   | Medium |
-| 11.8  | Prometheus alerting rules            | 1d     | Low    |
-| 11.9  | New Grafana dashboards (4)           | 2d     | Low    |
-| 11.10 | Integration with Phase 10 validation | 1d     | Low    |
-| 11.11 | Documentation                        | 1d     | Low    |
-
-**Total Effort**: 15 days
-
 ## Exit Criteria
 
 - [ ] Custom OTel Collector receiver builds and starts without errors

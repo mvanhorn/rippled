@@ -229,20 +229,6 @@ Before Phases 1-9 can be considered production-ready, we need proof that:
 
 ---
 
-## Effort Summary
-
-| Task | Description                 | Effort | Risk   |
-| ---- | --------------------------- | ------ | ------ |
-| 10.1 | Multi-node test harness     | 2d     | Medium |
-| 10.2 | RPC load generator          | 1d     | Low    |
-| 10.3 | Transaction submitter       | 2d     | Medium |
-| 10.4 | Telemetry validation suite  | 2d     | Medium |
-| 10.5 | Performance benchmark suite | 1.5d   | Low    |
-| 10.6 | CI integration              | 1d     | Medium |
-| 10.7 | Documentation               | 0.5d   | Low    |
-
-**Total Effort**: 10 days
-
 ## Exit Criteria
 
 - [ ] 5-node validator cluster starts and reaches consensus in docker-compose

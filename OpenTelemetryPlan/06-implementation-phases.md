@@ -725,20 +725,18 @@ flowchart TB
 
 ### Tasks
 
-| Task | Description                               | Effort | Risk   |
-| ---- | ----------------------------------------- | ------ | ------ |
-| 9.1  | NodeStore I/O metrics                     | 1d     | Low    |
-| 9.2  | Cache hit rate metrics + MetricsRegistry  | 2d     | Medium |
-| 9.3  | TxQ metrics                               | 1d     | Low    |
-| 9.4  | PerfLog per-RPC metrics                   | 1.5d   | Medium |
-| 9.5  | PerfLog per-job metrics                   | 1d     | Low    |
-| 9.6  | Counted object instance metrics           | 0.5d   | Low    |
-| 9.7  | Fee escalation & load factor metrics      | 0.5d   | Low    |
-| 9.8  | New Grafana dashboards (2 new, 2 updated) | 2d     | Low    |
-| 9.9  | Update documentation                      | 1d     | Low    |
-| 9.10 | Integration tests                         | 1.5d   | Medium |
-
-**Total Effort**: 12 days
+| Task | Description                               |
+| ---- | ----------------------------------------- |
+| 9.1  | NodeStore I/O metrics                     |
+| 9.2  | Cache hit rate metrics + MetricsRegistry  |
+| 9.3  | TxQ metrics                               |
+| 9.4  | PerfLog per-RPC metrics                   |
+| 9.5  | PerfLog per-job metrics                   |
+| 9.6  | Counted object instance metrics           |
+| 9.7  | Fee escalation & load factor metrics      |
+| 9.8  | New Grafana dashboards (2 new, 2 updated) |
+| 9.9  | Update documentation                      |
+| 9.10 | Integration tests                         |
 
 See [Phase9_taskList.md](./Phase9_taskList.md) for detailed per-task breakdown.
 
@@ -805,17 +803,15 @@ flowchart LR
 
 ### Tasks
 
-| Task | Description                            | Effort | Risk   |
-| ---- | -------------------------------------- | ------ | ------ |
-| 10.1 | Multi-node test harness (5 validators) | 2d     | Medium |
-| 10.2 | RPC load generator                     | 1d     | Low    |
-| 10.3 | Transaction submitter (6+ tx types)    | 2d     | Medium |
-| 10.4 | Telemetry validation suite             | 2d     | Medium |
-| 10.5 | Performance benchmark suite            | 1.5d   | Low    |
-| 10.6 | CI integration                         | 1d     | Medium |
-| 10.7 | Documentation                          | 0.5d   | Low    |
-
-**Total Effort**: 10 days
+| Task | Description                            |
+| ---- | -------------------------------------- |
+| 10.1 | Multi-node test harness (5 validators) |
+| 10.2 | RPC load generator                     |
+| 10.3 | Transaction submitter (6+ tx types)    |
+| 10.4 | Telemetry validation suite             |
+| 10.5 | Performance benchmark suite            |
+| 10.6 | CI integration                         |
+| 10.7 | Documentation                          |
 
 See [Phase10_taskList.md](./Phase10_taskList.md) for detailed per-task breakdown.
 
@@ -890,21 +886,19 @@ flowchart LR
 
 ### Tasks
 
-| Task  | Description                           | Effort | Risk   |
-| ----- | ------------------------------------- | ------ | ------ |
-| 11.1  | OTel Collector receiver scaffold (Go) | 1.5d   | Medium |
-| 11.2  | server_info / server_state collector  | 2d     | Low    |
-| 11.3  | get_counts collector                  | 1.5d   | Low    |
-| 11.4  | Peer topology collector               | 1.5d   | Medium |
-| 11.5  | Validator & amendment collector       | 1d     | Low    |
-| 11.6  | Fee & TxQ collector                   | 0.5d   | Low    |
-| 11.7  | DEX & AMM collector (optional)        | 1.5d   | Medium |
-| 11.8  | Prometheus alerting rules             | 1d     | Low    |
-| 11.9  | New Grafana dashboards (4)            | 2d     | Low    |
-| 11.10 | Integration with Phase 10 validation  | 1d     | Low    |
-| 11.11 | Documentation                         | 1d     | Low    |
-
-**Total Effort**: 15 days
+| Task  | Description                           |
+| ----- | ------------------------------------- |
+| 11.1  | OTel Collector receiver scaffold (Go) |
+| 11.2  | server_info / server_state collector  |
+| 11.3  | get_counts collector                  |
+| 11.4  | Peer topology collector               |
+| 11.5  | Validator & amendment collector       |
+| 11.6  | Fee & TxQ collector                   |
+| 11.7  | DEX & AMM collector (optional)        |
+| 11.8  | Prometheus alerting rules             |
+| 11.9  | New Grafana dashboards (4)            |
+| 11.10 | Integration with Phase 10 validation  |
+| 11.11 | Documentation                         |
 
 See [Phase11_taskList.md](./Phase11_taskList.md) for detailed per-task breakdown.
 
@@ -962,55 +956,11 @@ quadrantChart
 
 ---
 
-## 6.11 Effort Summary
-
-<div align="center">
-
-```mermaid
-%%{init: {'pie': {'textPosition': 0.75}}}%%
-pie showData
-    "Phase 1: Core Infrastructure" : 10
-    "Phase 2: RPC Tracing" : 10
-    "Phase 3: Transaction Tracing" : 11
-    "Phase 4: Consensus Tracing" : 11
-    "Phase 5: Documentation" : 5
-    "Phase 6: StatsD Bridge" : 5.6
-    "Phase 7: Native OTel Metrics" : 8
-    "Phase 8: Log-Trace Correlation" : 4.5
-    "Phase 9: Metric Gap Fill" : 12
-    "Phase 10: Workload Validation" : 10
-    "Phase 11: Third-Party Collection" : 15
-```
-
-**Total Effort Distribution (102.1 developer-days)**
-
-</div>
-
-### Resource Requirements
-
-| Phase            | Developers | Duration     | Total Effort   | Status             |
-| ---------------- | ---------- | ------------ | -------------- | ------------------ |
-| 1                | 2          | 2 weeks      | 10 days        | Active             |
-| 2                | 1-2        | 2 weeks      | 10 days        | Active             |
-| 3                | 2          | 2 weeks      | 11 days        | Active             |
-| 4                | 2          | 2 weeks      | 11 days        | Active             |
-| 5                | 1          | 1 week       | 5 days         | Active             |
-| 6                | 1          | 1 week       | 5.6 days       | Active             |
-| 7                | 1-2        | 2 weeks      | 8 days         | Active             |
-| 8                | 1          | 1 week       | 4.5 days       | Active             |
-| 9                | 1-2        | 2.5 weeks    | 12 days        | Future Enhancement |
-| 10               | 1          | 2 weeks      | 10 days        | Future Enhancement |
-| 11               | 1-2        | 3 weeks      | 15 days        | Future Enhancement |
-| **Total (1-8)**  | **2**      | **13 weeks** | **65.1 days**  |                    |
-| **Total (1-11)** | **2**      | **20 weeks** | **102.1 days** |                    |
-
----
-
-## 6.12 Quick Wins and Crawl-Walk-Run Strategy
+## 6.11 Quick Wins and Crawl-Walk-Run Strategy
 
 This section outlines a prioritized approach to maximize ROI with minimal initial investment.
 
-### 6.12.1 Crawl-Walk-Run Overview
+### 6.11.1 Crawl-Walk-Run Overview
 
 <div align="center">
 
@@ -1049,7 +999,7 @@ flowchart TB
 
 </div>
 
-### 6.12.2 Quick Wins (Immediate Value)
+### 6.11.2 Quick Wins (Immediate Value)
 
 | Quick Win                      | Effort   | Value  | When to Deploy |
 | ------------------------------ | -------- | ------ | -------------- |
@@ -1059,7 +1009,7 @@ flowchart TB
 | **Transaction Submit Tracing** | 1 day    | High   | Week 3         |
 | **Consensus Round Duration**   | 1 day    | Medium | Week 6         |
 
-### 6.12.3 CRAWL Phase (Weeks 1-2)
+### 6.11.3 CRAWL Phase (Weeks 1-2)
 
 **Goal**: Get basic tracing working with minimal code changes.
 
@@ -1079,7 +1029,7 @@ flowchart TB
 - No cross-node complexity
 - Single file modification to existing code
 
-### 6.12.4 WALK Phase (Weeks 3-5)
+### 6.11.4 WALK Phase (Weeks 3-5)
 
 **Goal**: Add transaction lifecycle tracing across nodes.
 
@@ -1098,7 +1048,7 @@ flowchart TB
 - Moderate complexity (requires context propagation)
 - High value for debugging transaction issues
 
-### 6.12.5 RUN Phase (Weeks 6-9)
+### 6.11.5 RUN Phase (Weeks 6-9)
 
 **Goal**: Full observability including consensus.
 
@@ -1117,7 +1067,7 @@ flowchart TB
 - Requires thorough testing
 - Lower relative value (consensus issues are rarer)
 
-### 6.12.6 ROI Prioritization Matrix
+### 6.11.6 ROI Prioritization Matrix
 
 ```mermaid
 quadrantChart
@@ -1139,11 +1089,11 @@ quadrantChart
 
 ---
 
-## 6.13 Definition of Done
+## 6.12 Definition of Done
 
 Clear, measurable criteria for each phase.
 
-### 6.13.1 Phase 1: Core Infrastructure
+### 6.12.1 Phase 1: Core Infrastructure
 
 | Criterion       | Measurement                                                | Target                       |
 | --------------- | ---------------------------------------------------------- | ---------------------------- |
@@ -1155,7 +1105,7 @@ Clear, measurable criteria for each phase.
 
 **Definition of Done**: All criteria met, PR merged, no regressions in CI.
 
-### 6.13.2 Phase 2: RPC Tracing
+### 6.12.2 Phase 2: RPC Tracing
 
 | Criterion          | Measurement                        | Target                     |
 | ------------------ | ---------------------------------- | -------------------------- |
@@ -1167,7 +1117,7 @@ Clear, measurable criteria for each phase.
 
 **Definition of Done**: RPC traces visible in Jaeger/Tempo for all commands, dashboard shows latency distribution.
 
-### 6.13.3 Phase 3: Transaction Tracing
+### 6.12.3 Phase 3: Transaction Tracing
 
 | Criterion        | Measurement                     | Target                             |
 | ---------------- | ------------------------------- | ---------------------------------- |
@@ -1179,7 +1129,7 @@ Clear, measurable criteria for each phase.
 
 **Definition of Done**: Transaction traces span 3+ nodes in test network, performance within bounds.
 
-### 6.13.4 Phase 4: Consensus Tracing
+### 6.12.4 Phase 4: Consensus Tracing
 
 | Criterion            | Measurement                   | Target                    |
 | -------------------- | ----------------------------- | ------------------------- |
@@ -1191,7 +1141,7 @@ Clear, measurable criteria for each phase.
 
 **Definition of Done**: Consensus rounds fully traceable, no impact on consensus timing.
 
-### 6.13.5 Phase 5: Production Deployment
+### 6.12.5 Phase 5: Production Deployment
 
 | Criterion    | Measurement                  | Target                     |
 | ------------ | ---------------------------- | -------------------------- |
@@ -1204,7 +1154,7 @@ Clear, measurable criteria for each phase.
 
 **Definition of Done**: Telemetry running in production, operators trained, alerts active.
 
-### 6.13.6 Success Metrics Summary
+### 6.12.6 Success Metrics Summary
 
 | Phase    | Primary Metric                   | Secondary Metric            | Deadline       | Status             |
 | -------- | -------------------------------- | --------------------------- | -------------- | ------------------ |
@@ -1222,7 +1172,7 @@ Clear, measurable criteria for each phase.
 
 ---
 
-## 6.14 Recommended Implementation Order
+## 6.13 Recommended Implementation Order
 
 Based on ROI analysis, implement in this exact order:
 
