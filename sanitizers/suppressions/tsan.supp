@@ -40,6 +40,22 @@ deadlock:pthread_create
 deadlock:pthread_rwlock_rdlock
 deadlock:boost::asio
 
+# Pre-existing rippled issues (suppress until fixed, tracked separately)
+# TODO(RIPD-XXXX): beast::Journal::Sink::threshold is not thread-safe.
+# The severity field is read/written from multiple threads without synchronization.
+race:beast::Journal::Sink::threshold
+
+# TODO(RIPD-XXXX): LedgerReplayTask/LedgerDeltaAcquire lock-order-inversion.
+# LedgerDeltaAcquire::notify() calls LedgerReplayTask::deltaReady() while
+# holding its own mutex, but deltaReady() acquires LedgerReplayTask's mutex,
+# creating an A->B / B->A lock ordering cycle.
+deadlock:xrpl::LedgerDeltaAcquire
+deadlock:xrpl::LedgerReplayTask
+
+# TODO(RIPD-XXXX): SHAMap copy constructor / setLedgerSeq data race.
+race:xrpl::SHAMap::SHAMap
+race:xrpl::SHAMap::setLedgerSeq
+
 # Signal/crash suppressions for GCC TSAN instrumentation issues
 signal:std::__cxx11::basic_stringbuf
 signal:basic_stringbuf
