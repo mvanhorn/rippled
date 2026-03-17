@@ -230,18 +230,16 @@
 
 ## Summary Table
 
-| Task | Description                            | New Files | Modified Files | Effort | Risk   | Depends On |
-| ---- | -------------------------------------- | --------- | -------------- | ------ | ------ | ---------- |
-| 7.1  | Add OTel Metrics SDK to build deps     | 0         | 2              | 0.5d   | Low    | —          |
-| 7.2  | Implement OTelCollector class          | 2         | 0              | 3d     | Medium | 7.1        |
-| 7.3  | Update CollectorManager config routing | 0         | 2              | 0.5d   | Low    | 7.2        |
-| 7.4  | Update OTel Collector YAML and Docker  | 0         | 2              | 0.5d   | Low    | 7.3        |
-| 7.5  | Preserve metric names in Prometheus    | 0         | 1              | 1d     | Medium | 7.2        |
-| 7.6  | Update Grafana dashboards (if needed)  | 0         | 3              | 1d     | Low    | 7.5        |
-| 7.7  | Update integration tests               | 0         | 1              | 0.5d   | Low    | 7.4        |
-| 7.8  | Update documentation                   | 0         | 4              | 1d     | Low    | 7.6        |
-
-**Total Effort**: 8 days
+| Task | Description                            | New Files | Modified Files | Depends On |
+| ---- | -------------------------------------- | --------- | -------------- | ---------- |
+| 7.1  | Add OTel Metrics SDK to build deps     | 0         | 2              | —          |
+| 7.2  | Implement OTelCollector class          | 2         | 0              | 7.1        |
+| 7.3  | Update CollectorManager config routing | 0         | 2              | 7.2        |
+| 7.4  | Update OTel Collector YAML and Docker  | 0         | 2              | 7.3        |
+| 7.5  | Preserve metric names in Prometheus    | 0         | 1              | 7.2        |
+| 7.6  | Update Grafana dashboards (if needed)  | 0         | 3              | 7.5        |
+| 7.7  | Update integration tests               | 0         | 1              | 7.4        |
+| 7.8  | Update documentation                   | 0         | 4              | 7.6        |
 
 **Parallel work**: Tasks 7.4 and 7.5 can run in parallel after 7.2/7.3 complete. Task 7.6 depends on 7.5's findings. Tasks 7.7 and 7.8 can run in parallel after 7.6.
 

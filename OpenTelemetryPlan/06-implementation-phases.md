@@ -503,18 +503,16 @@ See [Phase7_taskList.md](./Phase7_taskList.md) for detailed per-task breakdown.
 
 ### Tasks
 
-| Task | Description                                                               | Effort | Risk   |
-| ---- | ------------------------------------------------------------------------- | ------ | ------ |
-| 7.1  | Add OTel Metrics SDK to build deps (conan/cmake)                          | 0.5d   | Low    |
-| 7.2  | Implement `OTelCollector` class (~400-500 lines)                          | 3d     | Medium |
-| 7.3  | Update `CollectorManager` — add `server=otel`                             | 0.5d   | Low    |
-| 7.4  | Update OTel Collector YAML (add metrics pipeline, remove StatsD receiver) | 0.5d   | Low    |
-| 7.5  | Preserve metric names in Prometheus (naming strategy)                     | 1d     | Medium |
-| 7.6  | Update Grafana dashboards (if names change)                               | 1d     | Low    |
-| 7.7  | Update integration tests                                                  | 0.5d   | Low    |
-| 7.8  | Update documentation (runbook, reference docs)                            | 1d     | Low    |
-
-**Total Effort**: 8 days
+| Task | Description                                                               |
+| ---- | ------------------------------------------------------------------------- |
+| 7.1  | Add OTel Metrics SDK to build deps (conan/cmake)                          |
+| 7.2  | Implement `OTelCollector` class (~400-500 lines)                          |
+| 7.3  | Update `CollectorManager` — add `server=otel`                             |
+| 7.4  | Update OTel Collector YAML (add metrics pipeline, remove StatsD receiver) |
+| 7.5  | Preserve metric names in Prometheus (naming strategy)                     |
+| 7.6  | Update Grafana dashboards (if names change)                               |
+| 7.7  | Update integration tests                                                  |
+| 7.8  | Update documentation (runbook, reference docs)                            |
 
 ### Exit Criteria
 
