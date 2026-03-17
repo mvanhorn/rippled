@@ -620,16 +620,14 @@ flowchart LR
 
 ### Tasks
 
-| Task | Description                                    | Effort | Risk   |
-| ---- | ---------------------------------------------- | ------ | ------ |
-| 8.1  | Inject trace_id into Logs::format()            | 1d     | Low    |
-| 8.2  | Add Loki to Docker Compose stack               | 0.5d   | Low    |
-| 8.3  | Add filelog receiver to OTel Collector         | 1d     | Medium |
-| 8.4  | Configure Grafana trace-to-log correlation     | 0.5d   | Low    |
-| 8.5  | Update integration tests                       | 0.5d   | Low    |
-| 8.6  | Update documentation (runbook, reference docs) | 1d     | Low    |
-
-**Total Effort**: 4.5 days
+| Task | Description                                    |
+| ---- | ---------------------------------------------- |
+| 8.1  | Inject trace_id into Logs::format()            |
+| 8.2  | Add Loki to Docker Compose stack               |
+| 8.3  | Add filelog receiver to OTel Collector         |
+| 8.4  | Configure Grafana trace-to-log correlation     |
+| 8.5  | Update integration tests                       |
+| 8.6  | Update documentation (runbook, reference docs) |
 
 **Parallel work**: Task 8.2 (Loki infra) can run in parallel with Task 8.1 (code change). Tasks 8.3–8.6 are sequential.
 

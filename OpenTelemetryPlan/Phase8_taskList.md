@@ -210,16 +210,14 @@
 
 ## Summary Table
 
-| Task | Description                                | Sub-Phase | New Files | Modified Files | Effort | Risk   | Depends On |
-| ---- | ------------------------------------------ | --------- | --------- | -------------- | ------ | ------ | ---------- |
-| 8.1  | Inject trace_id into Logs::format()        | 8a        | 0         | 1              | 1d     | Low    | Phase 7    |
-| 8.2  | Add Loki to Docker Compose stack           | 8b        | 1         | 1              | 0.5d   | Low    | --         |
-| 8.3  | Add filelog receiver to OTel Collector     | 8b        | 0         | 2              | 1d     | Medium | 8.1, 8.2   |
-| 8.4  | Configure Grafana trace-to-log correlation | 8b        | 0         | 2              | 0.5d   | Low    | 8.3        |
-| 8.5  | Update integration tests                   | 8a + 8b   | 0         | 1              | 0.5d   | Low    | 8.4        |
-| 8.6  | Update documentation                       | 8a + 8b   | 0         | 3              | 1d     | Low    | 8.5        |
-
-**Total Effort**: 4.5 days
+| Task | Description                                | Sub-Phase | New Files | Modified Files | Depends On |
+| ---- | ------------------------------------------ | --------- | --------- | -------------- | ---------- |
+| 8.1  | Inject trace_id into Logs::format()        | 8a        | 0         | 1              | Phase 7    |
+| 8.2  | Add Loki to Docker Compose stack           | 8b        | 1         | 1              | --         |
+| 8.3  | Add filelog receiver to OTel Collector     | 8b        | 0         | 2              | 8.1, 8.2   |
+| 8.4  | Configure Grafana trace-to-log correlation | 8b        | 0         | 2              | 8.3        |
+| 8.5  | Update integration tests                   | 8a + 8b   | 0         | 1              | 8.4        |
+| 8.6  | Update documentation                       | 8a + 8b   | 0         | 3              | 8.5        |
 
 **Parallel work**: Task 8.2 (Loki infra) can run in parallel with Task 8.1 (code change). Tasks 8.3-8.6 are sequential.
 
