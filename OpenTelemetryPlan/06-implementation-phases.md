@@ -305,19 +305,17 @@ rippled has a mature metrics framework (`beast::insight`) that emits StatsD-form
 
 ### Tasks
 
-| Task | Description                                                                                                     | Effort | Risk |
-| ---- | --------------------------------------------------------------------------------------------------------------- | ------ | ---- |
-| 6.1  | **DEFERRED** Fix Meter wire format (`\|m` → `\|c`) in StatsDCollector.cpp — breaking change, tracked separately | 0.5d   | Low  |
-| 6.2  | Add `statsd` receiver to OTel Collector config                                                                  | 0.5d   | Low  |
-| 6.3  | Expose UDP port 8125 in docker-compose.yml                                                                      | 0.1d   | Low  |
-| 6.4  | Add `[insight]` config to integration test node configs                                                         | 0.5d   | Low  |
-| 6.5  | Create "Node Health" Grafana dashboard (8 panels)                                                               | 1d     | Low  |
-| 6.6  | Create "Network Traffic" Grafana dashboard (8 panels)                                                           | 1d     | Low  |
-| 6.7  | Create "RPC & Pathfinding (StatsD)" Grafana dashboard (8 panels)                                                | 1d     | Low  |
-| 6.8  | Update integration test to verify StatsD metrics in Prometheus                                                  | 0.5d   | Low  |
-| 6.9  | Update TESTING.md and telemetry-runbook.md                                                                      | 0.5d   | Low  |
-
-**Total Effort**: 5.6 days
+| Task | Description                                                                                                     |
+| ---- | --------------------------------------------------------------------------------------------------------------- |
+| 6.1  | **DEFERRED** Fix Meter wire format (`\|m` → `\|c`) in StatsDCollector.cpp — breaking change, tracked separately |
+| 6.2  | Add `statsd` receiver to OTel Collector config                                                                  |
+| 6.3  | Expose UDP port 8125 in docker-compose.yml                                                                      |
+| 6.4  | Add `[insight]` config to integration test node configs                                                         |
+| 6.5  | Create "Node Health" Grafana dashboard (8 panels)                                                               |
+| 6.6  | Create "Network Traffic" Grafana dashboard (8 panels)                                                           |
+| 6.7  | Create "RPC & Pathfinding (StatsD)" Grafana dashboard (8 panels)                                                |
+| 6.8  | Update integration test to verify StatsD metrics in Prometheus                                                  |
+| 6.9  | Update TESTING.md and telemetry-runbook.md                                                                      |
 
 ### Wire Format Fix (Task 6.1) — DEFERRED
 
