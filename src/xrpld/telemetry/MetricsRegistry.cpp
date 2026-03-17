@@ -41,9 +41,12 @@
 #include <opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_options.h>
 #include <opentelemetry/sdk/metrics/meter_provider.h>
 #include <opentelemetry/sdk/metrics/meter_provider_factory.h>
+#include <opentelemetry/sdk/resource/resource.h>
+#include <opentelemetry/sdk/resource/semantic_conventions.h>
 
 namespace metric_sdk = opentelemetry::sdk::metrics;
 namespace otlp_http = opentelemetry::exporter::otlp;
+namespace resource = opentelemetry::sdk::resource;
 
 #endif  // XRPL_ENABLE_TELEMETRY
 
@@ -61,13 +64,14 @@ MetricsRegistry::~MetricsRegistry()
 }
 
 void
-MetricsRegistry::start(std::string const& endpoint)
+MetricsRegistry::start(std::string const& endpoint, std::string const& instanceId)
 {
 #ifdef XRPL_ENABLE_TELEMETRY
     if (!enabled_)
         return;
 
-    JLOG(journal_.info()) << "MetricsRegistry: starting, endpoint=" << endpoint;
+    JLOG(journal_.info()) << "MetricsRegistry: starting, endpoint=" << endpoint
+                          << ", instanceId=" << instanceId;
 
     // Configure OTLP/HTTP metric exporter.
     otlp_http::OtlpHttpMetricExporterOptions exporterOpts;
@@ -81,8 +85,17 @@ MetricsRegistry::start(std::string const& endpoint)
     auto reader =
         metric_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOpts);
 
-    // Create MeterProvider and attach the reader.
-    provider_ = std::make_shared<metric_sdk::MeterProvider>();
+    // Configure resource attributes so Prometheus exported_instance labels
+    // distinguish metrics from different nodes (matches OTelCollector setup).
+    resource::ResourceAttributes attrs;
+    attrs[resource::SemanticConventions::kServiceName] = "rippled";
+    if (!instanceId.empty())
+        attrs[resource::SemanticConventions::kServiceInstanceId] = instanceId;
+    auto resourceAttrs = resource::Resource::Create(attrs);
+
+    // Create MeterProvider with resource, then attach the metric reader.
+    provider_ = metric_sdk::MeterProviderFactory::Create(
+        std::make_unique<metric_sdk::ViewRegistry>(), resourceAttrs);
     provider_->AddMetricReader(std::move(reader));
 
     // Get a meter for all rippled instruments.
@@ -91,23 +104,26 @@ MetricsRegistry::start(std::string const& endpoint)
     // --- Create synchronous instruments ---
 
     // RPC per-method counters and histogram.
-    rpcStartedCounter_ =
-        meter_->CreateUInt64Counter("rpc_method_started_total", "Total RPC method calls started");
+    rpcStartedCounter_ = meter_->CreateUInt64Counter(
+        "rippled_rpc_method_started_total", "Total RPC method calls started");
     rpcFinishedCounter_ = meter_->CreateUInt64Counter(
-        "rpc_method_finished_total", "Total RPC method calls completed successfully");
+        "rippled_rpc_method_finished_total", "Total RPC method calls completed successfully");
     rpcErroredCounter_ = meter_->CreateUInt64Counter(
-        "rpc_method_errored_total", "Total RPC method calls that errored");
+        "rippled_rpc_method_errored_total", "Total RPC method calls that errored");
     rpcDurationHistogram_ = meter_->CreateDoubleHistogram(
-        "rpc_method_duration_us", "RPC method execution time in microseconds");
+        "rippled_rpc_method_duration_us", "RPC method execution time in microseconds");
 
     // Job queue per-type counters and histograms.
-    jobQueuedCounter_ = meter_->CreateUInt64Counter("job_queued_total", "Total jobs enqueued");
-    jobStartedCounter_ = meter_->CreateUInt64Counter("job_started_total", "Total jobs started");
-    jobFinishedCounter_ = meter_->CreateUInt64Counter("job_finished_total", "Total jobs completed");
+    jobQueuedCounter_ =
+        meter_->CreateUInt64Counter("rippled_job_queued_total", "Total jobs enqueued");
+    jobStartedCounter_ =
+        meter_->CreateUInt64Counter("rippled_job_started_total", "Total jobs started");
+    jobFinishedCounter_ =
+        meter_->CreateUInt64Counter("rippled_job_finished_total", "Total jobs completed");
     jobQueuedDurationHistogram_ = meter_->CreateDoubleHistogram(
-        "job_queued_duration_us", "Time jobs spent waiting in the queue (microseconds)");
+        "rippled_job_queued_duration_us", "Time jobs spent waiting in the queue (microseconds)");
     jobRunningDurationHistogram_ = meter_->CreateDoubleHistogram(
-        "job_running_duration_us", "Job execution time in microseconds");
+        "rippled_job_running_duration_us", "Job execution time in microseconds");
 
     // Register all observable (async) gauges.
     registerAsyncGauges();
@@ -253,7 +269,7 @@ MetricsRegistry::registerAsyncGauges()
 {
     // --- Task 9.2: Cache hit rate and size gauges ---
     cacheHitRateGauge_ =
-        meter_->CreateDoubleObservableGauge("cache_metrics", "Cache hit rates and sizes");
+        meter_->CreateDoubleObservableGauge("rippled_cache_metrics", "Cache hit rates and sizes");
     cacheHitRateGauge_->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* state) {
             auto* self = static_cast<MetricsRegistry*>(state);
@@ -307,7 +323,8 @@ MetricsRegistry::registerAsyncGauges()
         this);
 
     // --- Task 9.3: TxQ metrics gauges ---
-    txqGauge_ = meter_->CreateDoubleObservableGauge("txq_metrics", "Transaction queue metrics");
+    txqGauge_ =
+        meter_->CreateDoubleObservableGauge("rippled_txq_metrics", "Transaction queue metrics");
     txqGauge_->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* state) {
             auto* self = static_cast<MetricsRegistry*>(state);
@@ -349,7 +366,7 @@ MetricsRegistry::registerAsyncGauges()
 
     // --- Task 9.6: Counted object instance gauges ---
     objectCountGauge_ = meter_->CreateInt64ObservableGauge(
-        "object_count", "Live instance counts for key internal object types");
+        "rippled_object_count", "Live instance counts for key internal object types");
     objectCountGauge_->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* /* state */) {
             try
@@ -373,8 +390,8 @@ MetricsRegistry::registerAsyncGauges()
         this);
 
     // --- Task 9.7: Load factor breakdown gauges ---
-    loadFactorGauge_ =
-        meter_->CreateDoubleObservableGauge("load_factor_metrics", "Fee load factor breakdown");
+    loadFactorGauge_ = meter_->CreateDoubleObservableGauge(
+        "rippled_load_factor_metrics", "Fee load factor breakdown");
     loadFactorGauge_->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* state) {
             auto* self = static_cast<MetricsRegistry*>(state);
@@ -444,7 +461,7 @@ MetricsRegistry::registerAsyncGauges()
     // libxrpl nodestore code — the MetricsRegistry reads the existing atomic
     // counters from Database via its public accessors.
     nodeStoreGauge_ = meter_->CreateInt64ObservableGauge(
-        "nodestore_state", "NodeStore I/O counters, queue depth, and write load");
+        "rippled_nodestore_state", "NodeStore I/O counters, queue depth, and write load");
     nodeStoreGauge_->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* state) {
             auto* self = static_cast<MetricsRegistry*>(state);

@@ -1517,7 +1517,15 @@ ApplicationImp::start(bool withTimers)
         auto const& section = config_->section("telemetry");
         std::string endpoint = "http://localhost:4318/v1/metrics";
         set(endpoint, "metrics_endpoint", section);
-        metricsRegistry_->start(endpoint);
+
+        // Pass the service_instance_id so the MeterProvider Resource
+        // carries it, giving Prometheus an exported_instance label.
+        std::string instanceId;
+        set(instanceId, "service_instance_id", section);
+        if (instanceId.empty() && nodeIdentity_)
+            instanceId = toBase58(TokenType::NodePublic, nodeIdentity_->first);
+
+        metricsRegistry_->start(endpoint, instanceId);
     }
 }
 

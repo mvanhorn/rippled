@@ -23,15 +23,15 @@
                     |       +-- OtlpHttpMetricExporter
                     |
                     +-- Counters / Histograms   (synchronous instruments)
-                    |       +-- rpc_method_started_total
-                    |       +-- rpc_method_finished_total
-                    |       +-- rpc_method_errored_total
-                    |       +-- rpc_method_duration_us (Histogram)
-                    |       +-- job_queued_total
-                    |       +-- job_started_total
-                    |       +-- job_finished_total
-                    |       +-- job_queued_duration_us (Histogram)
-                    |       +-- job_running_duration_us (Histogram)
+                    |       +-- rippled_rpc_method_started_total
+                    |       +-- rippled_rpc_method_finished_total
+                    |       +-- rippled_rpc_method_errored_total
+                    |       +-- rippled_rpc_method_duration_us (Histogram)
+                    |       +-- rippled_job_queued_total
+                    |       +-- rippled_job_started_total
+                    |       +-- rippled_job_finished_total
+                    |       +-- rippled_job_queued_duration_us (Histogram)
+                    |       +-- rippled_job_running_duration_us (Histogram)
                     |
                     +-- Observable Gauges  (async callbacks, polled by reader)
                             +-- Cache hit rates  (SLE, ledger, AL)
@@ -150,11 +150,15 @@ public:
 
     /** Initialize the OTel metrics pipeline and register all instruments.
 
-        @param endpoint  OTLP/HTTP endpoint URL for metric export
-                         (e.g. "http://localhost:4318/v1/metrics").
+        @param endpoint    OTLP/HTTP endpoint URL for metric export
+                           (e.g. "http://localhost:4318/v1/metrics").
+        @param instanceId  Value for the service.instance.id resource
+                           attribute. When non-empty, Prometheus metrics
+                           carry an exported_instance label for per-node
+                           filtering.
     */
     void
-    start(std::string const& endpoint);
+    start(std::string const& endpoint, std::string const& instanceId = {});
 
     /** Flush pending metrics and shut down the pipeline. */
     void
