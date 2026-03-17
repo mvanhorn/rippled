@@ -284,13 +284,17 @@ MetricsRegistry::registerAsyncGauges()
                     ->Observe(sleRate, {{"metric", "SLE_hit_rate"}});
 
                 // Ledger cache hit rate.
-                auto ledgerRate = app.getLedgerMaster().getCacheHitRate();
+                // TaggedCache::getHitRate() returns 0-100; normalize to
+                // 0.0-1.0 so the Grafana panel using "percentunit" renders
+                // correctly.
+                auto ledgerRate = app.getLedgerMaster().getCacheHitRate() / 100.0;
                 opentelemetry::nostd::get<opentelemetry::nostd::shared_ptr<
                     opentelemetry::metrics::ObserverResultT<double>>>(result)
                     ->Observe(ledgerRate, {{"metric", "ledger_hit_rate"}});
 
-                // AcceptedLedger cache hit rate.
-                auto alRate = app.getAcceptedLedgerCache().getHitRate();
+                // AcceptedLedger cache hit rate (also 0-100 from
+                // TaggedCache; normalize to 0.0-1.0).
+                auto alRate = app.getAcceptedLedgerCache().getHitRate() / 100.0;
                 opentelemetry::nostd::get<opentelemetry::nostd::shared_ptr<
                     opentelemetry::metrics::ObserverResultT<double>>>(result)
                     ->Observe(alRate, {{"metric", "AL_hit_rate"}});
