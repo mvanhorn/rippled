@@ -11,8 +11,6 @@ include(default)
             {% set model_code = "" %}
             {% set extra_cxxflags = ["-fno-omit-frame-pointer", "-O1", "-Wno-stringop-overflow"] %}
 
-            {% set extra_exeflags = [] %}
-
             {% if "address" in sanitizers %}
                 {% set _ = sanitizer_list.append("address") %}
                 {% set model_code = "-mcmodel=large" %}
@@ -24,11 +22,6 @@ include(default)
                 {% set _ = extra_cxxflags.append("-Wno-tsan") %}
                 {% set _ = defines.append("BOOST_USE_TSAN")%}
                 {% set _ = defines.append("BOOST_USE_UCONTEXT")%}
-                {# -no-pie: load executable at fixed low address (0x400000) so it    #}
-                {# does not land in TSAN's shadow memory region.  Without this,      #}
-                {# ASLR + PIE causes "unexpected memory mapping" crashes.             #}
-                {% set _ = extra_cxxflags.append("-fno-pie") %}
-                {% set _ = extra_exeflags.append("-no-pie") %}
             {% endif %}
 
             {% if "undefinedbehavior" in sanitizers %}
@@ -40,7 +33,7 @@ include(default)
 
             tools.build:cxxflags+=['{{sanitizer_flags}} {{" ".join(extra_cxxflags)}}']
             tools.build:sharedlinkflags+=['{{sanitizer_flags}}']
-            tools.build:exelinkflags+=['{{sanitizer_flags}} {{" ".join(extra_exeflags)}}']
+            tools.build:exelinkflags+=['{{sanitizer_flags}}']
             tools.build:defines+={{defines}}
         {% endif %}
     {% elif compiler == "apple-clang" or compiler == "clang" %}
@@ -48,7 +41,6 @@ include(default)
             {% set sanitizer_list = [] %}
             {% set defines = [] %}
             {% set extra_cxxflags = ["-fno-omit-frame-pointer", "-O1"] %}
-            {% set extra_exeflags = [] %}
 
             {% if "address" in sanitizers %}
                 {% set _ = sanitizer_list.append("address") %}
@@ -58,11 +50,6 @@ include(default)
                 {% set _ = sanitizer_list.append("thread") %}
                 {% set _ = defines.append("BOOST_USE_TSAN")%}
                 {% set _ = defines.append("BOOST_USE_UCONTEXT")%}
-                {# -no-pie: load executable at fixed low address (0x400000) so it    #}
-                {# does not land in TSAN's shadow memory region.  Without this,      #}
-                {# ASLR + PIE causes "unexpected memory mapping" crashes.             #}
-                {% set _ = extra_cxxflags.append("-fno-pie") %}
-                {% set _ = extra_exeflags.append("-no-pie") %}
             {% endif %}
 
             {% if "undefinedbehavior" in sanitizers %}
@@ -75,7 +62,7 @@ include(default)
 
             tools.build:cxxflags+=['{{sanitizer_flags}} {{" ".join(extra_cxxflags)}}']
             tools.build:sharedlinkflags+=['{{sanitizer_flags}}']
-            tools.build:exelinkflags+=['{{sanitizer_flags}} {{" ".join(extra_exeflags)}}']
+            tools.build:exelinkflags+=['{{sanitizer_flags}}']
             tools.build:defines+={{defines}}
         {% endif %}
     {% endif %}
@@ -94,6 +81,13 @@ tools.info.package_id:confs+=["tools.build:cxxflags", "tools.build:exelinkflags"
         boost/*:extra_b2_flags=context-impl=ucontext address-sanitizer=on define=BOOST_USE_ASAN=1
         boost/*:without_context=False
         # Boost stacktrace fails to build with some sanitizers
+        boost/*:without_stacktrace=True
+    {% elif "thread" in sanitizers %}
+        # Build Boost.Context with ucontext backend (not fcontext) so that
+        # TSAN can track fiber/context switches made by boost::asio::spawn.
+        # fcontext uses raw assembly that TSAN cannot instrument.
+        boost/*:extra_b2_flags=context-impl=ucontext thread-sanitizer=on define=BOOST_USE_TSAN=1
+        boost/*:without_context=False
         boost/*:without_stacktrace=True
     {% endif %}
 {% endif %}
