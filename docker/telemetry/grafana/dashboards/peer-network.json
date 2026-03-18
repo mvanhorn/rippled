@@ -30,8 +30,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.proposal.receive\"}[5m]))",
-          "legendFormat": "Proposals Received / Sec"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.proposal.receive\"}[5m]))",
+          "legendFormat": "Proposals Received / Sec [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -69,8 +69,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.validation.receive\"}[5m]))",
-          "legendFormat": "Validations Received / Sec"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.validation.receive\"}[5m]))",
+          "legendFormat": "Validations Received / Sec [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -108,8 +108,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_peer_proposal_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_peer_proposal_trusted=~\"$proposal_trusted\", span_name=\"peer.proposal.receive\"}[5m]))",
-          "legendFormat": "Trusted = {{xrpl_peer_proposal_trusted}}"
+          "expr": "sum by (xrpl_peer_proposal_trusted, exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_peer_proposal_trusted=~\"$proposal_trusted\", span_name=\"peer.proposal.receive\"}[5m]))",
+          "legendFormat": "Trusted = {{xrpl_peer_proposal_trusted}} [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -140,8 +140,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_peer_validation_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_peer_validation_trusted=~\"$validation_trusted\", span_name=\"peer.validation.receive\"}[5m]))",
-          "legendFormat": "Trusted = {{xrpl_peer_validation_trusted}}"
+          "expr": "sum by (xrpl_peer_validation_trusted, exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_peer_validation_trusted=~\"$validation_trusted\", span_name=\"peer.validation.receive\"}[5m]))",
+          "legendFormat": "Trusted = {{xrpl_peer_validation_trusted}} [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {

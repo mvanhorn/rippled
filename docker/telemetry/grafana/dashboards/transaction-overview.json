@@ -29,15 +29,15 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m]))",
-          "legendFormat": "tx.process / Sec"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m]))",
+          "legendFormat": "tx.process / Sec [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.receive\"}[5m]))",
-          "legendFormat": "tx.receive / Sec"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.receive\"}[5m]))",
+          "legendFormat": "tx.receive / Sec [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -75,15 +75,15 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m])))",
-          "legendFormat": "P95"
+          "expr": "histogram_quantile(0.95, sum by (le, exported_instance) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m])))",
+          "legendFormat": "P95 [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m])))",
-          "legendFormat": "P50"
+          "expr": "histogram_quantile(0.50, sum by (le, exported_instance) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m])))",
+          "legendFormat": "P50 [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -121,8 +121,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_tx_local) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_tx_local=~\"$tx_origin\", span_name=\"tx.process\"}[5m]))",
-          "legendFormat": "Local = {{xrpl_tx_local}}"
+          "expr": "sum by (xrpl_tx_local, exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_tx_local=~\"$tx_origin\", span_name=\"tx.process\"}[5m]))",
+          "legendFormat": "Local = {{xrpl_tx_local}} [{{exported_instance}}]"
         }
       ]
     },
@@ -147,8 +147,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.receive\"}[5m]))",
-          "legendFormat": "Total Received"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.receive\"}[5m]))",
+          "legendFormat": "Total Received [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -216,15 +216,15 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.apply\"}[5m])))",
-          "legendFormat": "P95 tx.apply"
+          "expr": "histogram_quantile(0.95, sum by (le, exported_instance) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.apply\"}[5m])))",
+          "legendFormat": "P95 tx.apply [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.apply\"}[5m])))",
-          "legendFormat": "P50 tx.apply"
+          "expr": "histogram_quantile(0.50, sum by (le, exported_instance) (rate(traces_span_metrics_duration_milliseconds_bucket{exported_instance=~\"$node\", span_name=\"tx.apply\"}[5m])))",
+          "legendFormat": "P50 tx.apply [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -262,8 +262,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.receive\"}[5m]))",
-          "legendFormat": "tx.receive / Sec"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.receive\"}[5m]))",
+          "legendFormat": "tx.receive / Sec [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -301,8 +301,8 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum(rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.apply\", status_code=\"STATUS_CODE_ERROR\"}[5m]))",
-          "legendFormat": "Failed / Sec"
+          "expr": "sum by (exported_instance) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.apply\", status_code=\"STATUS_CODE_ERROR\"}[5m]))",
+          "legendFormat": "Failed / Sec [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -336,7 +336,7 @@
       {
         "name": "node",
         "label": "Node",
-        "description": "Filter by rippled node (service.instance.id \u2014 e.g. Node-1)",
+        "description": "Filter by rippled node (service.instance.id — e.g. Node-1)",
         "type": "query",
         "query": "label_values(traces_span_metrics_calls_total, exported_instance)",
         "datasource": {
