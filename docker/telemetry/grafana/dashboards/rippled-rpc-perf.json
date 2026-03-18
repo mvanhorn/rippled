@@ -54,7 +54,12 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 10
+            "fillOpacity": 10,
+            "axisLabel": "Operations / Sec",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "auto",
+            "pointSize": 3
           },
           "color": {
             "mode": "palette-classic"
@@ -99,7 +104,12 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 5
+            "fillOpacity": 5,
+            "axisLabel": "Operations / Sec",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "auto",
+            "pointSize": 3
           },
           "color": {
             "mode": "palette-classic"
@@ -144,7 +154,12 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 5
+            "fillOpacity": 5,
+            "axisLabel": "Operations / Sec",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "auto",
+            "pointSize": 3
           },
           "color": {
             "mode": "palette-classic"
@@ -198,7 +213,12 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 5
+            "fillOpacity": 5,
+            "axisLabel": "Duration (\u03bcs)",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "auto",
+            "pointSize": 3
           },
           "color": {
             "mode": "palette-classic"
@@ -243,7 +263,12 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 5
+            "fillOpacity": 5,
+            "axisLabel": "Duration (\u03bcs)",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "auto",
+            "pointSize": 3
           },
           "color": {
             "mode": "palette-classic"
@@ -290,7 +315,12 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
-            "fillOpacity": 5
+            "fillOpacity": 5,
+            "axisLabel": "Error Ratio",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "auto",
+            "pointSize": 3
           },
           "color": {
             "mode": "palette-classic"

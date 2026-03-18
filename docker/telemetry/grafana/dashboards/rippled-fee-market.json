@@ -43,8 +43,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "custom": {
+            "axisLabel": "Transactions",
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 10
@@ -90,8 +91,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "custom": {
+            "axisLabel": "Transactions",
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 10
@@ -151,8 +153,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "custom": {
+            "axisLabel": "Fee Level",
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5,
@@ -216,8 +219,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "custom": {
+            "axisLabel": "Multiplier",
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5
@@ -286,8 +290,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "custom": {
+            "axisLabel": "Multiplier",
             "drawStyle": "line",
             "lineWidth": 2,
             "fillOpacity": 5
