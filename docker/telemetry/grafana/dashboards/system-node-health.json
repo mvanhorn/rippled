@@ -107,7 +107,7 @@
     },
     {
       "title": "Operating Mode Duration",
-      "description": "Cumulative time spent in each operating mode (Disconnected, Connected, Syncing, Tracking, Full). Sourced from State_Accounting.*_duration gauges (NetworkOPs.cpp:774-778). A healthy node should spend the vast majority of time in Full mode.",
+      "description": "Cumulative time spent in each operating mode (Disconnected, Connected, Syncing, Tracking, Full). Sourced from State_Accounting.*_duration gauges (NetworkOPs.cpp:774-778) which report microseconds. A healthy node should spend the vast majority of time in Full mode.",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -160,9 +160,9 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "unit": "\u00b5s",
           "custom": {
-            "axisLabel": "Duration (Sec)",
+            "axisLabel": "Duration",
             "spanNulls": true,
             "insertNulls": false,
             "showPoints": "auto",
