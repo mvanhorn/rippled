@@ -701,7 +701,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "topk(15, rippled_object_count{exported_instance=~\"$node\"})",
+          "expr": "topk(15, rippled_object_count{exported_instance=~\"$node\", type=~\"$type\"})",
           "legendFormat": "{{type}}"
         }
       ],
@@ -732,6 +732,26 @@
         "description": "Filter by rippled node (service.instance.id)",
         "type": "query",
         "query": "label_values(rippled_LedgerMaster_Validated_Ledger_Age, exported_instance)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "type",
+        "label": "Object Type",
+        "description": "Filter by internal object type (CountedObject<T> class name)",
+        "type": "query",
+        "query": "label_values(rippled_object_count, type)",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
