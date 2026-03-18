@@ -258,7 +258,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_consensus_mode) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"consensus.ledger_close\"}[5m]))",
+          "expr": "sum by (xrpl_consensus_mode) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_consensus_mode=~\"$consensus_mode\", span_name=\"consensus.ledger_close\"}[5m]))",
           "legendFormat": "{{xrpl_consensus_mode}}"
         }
       ],

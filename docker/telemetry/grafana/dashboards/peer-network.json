@@ -108,7 +108,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_peer_proposal_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.proposal.receive\"}[5m]))",
+          "expr": "sum by (xrpl_peer_proposal_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_peer_proposal_trusted=~\"$proposal_trusted\", span_name=\"peer.proposal.receive\"}[5m]))",
           "legendFormat": "Trusted = {{xrpl_peer_proposal_trusted}}"
         }
       ],
@@ -140,7 +140,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_peer_validation_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.validation.receive\"}[5m]))",
+          "expr": "sum by (xrpl_peer_validation_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_peer_validation_trusted=~\"$validation_trusted\", span_name=\"peer.validation.receive\"}[5m]))",
           "legendFormat": "Trusted = {{xrpl_peer_validation_trusted}}"
         }
       ],
@@ -182,6 +182,26 @@
         "description": "Filter by proposal trust status (true = from trusted validator)",
         "type": "query",
         "query": "label_values(traces_span_metrics_calls_total{span_name=\"peer.proposal.receive\"}, xrpl_peer_proposal_trusted)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "multi": true,
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "validation_trusted",
+        "label": "Validation Trusted",
+        "description": "Filter by validation trust status (true = from trusted validator)",
+        "type": "query",
+        "query": "label_values(traces_span_metrics_calls_total{span_name=\"peer.validation.receive\"}, xrpl_peer_validation_trusted)",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
