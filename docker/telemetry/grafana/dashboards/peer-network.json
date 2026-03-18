@@ -111,7 +111,13 @@
           "expr": "sum by (xrpl_peer_proposal_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.proposal.receive\"}[5m]))",
           "legendFormat": "Trusted = {{xrpl_peer_proposal_trusted}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
     },
     {
       "title": "Validations Trusted vs Untrusted",
@@ -137,7 +143,13 @@
           "expr": "sum by (xrpl_peer_validation_trusted) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"peer.validation.receive\"}[5m]))",
           "legendFormat": "Trusted = {{xrpl_peer_validation_trusted}}"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
     }
   ],
   "schemaVersion": 39,
