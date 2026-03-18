@@ -64,6 +64,12 @@ race:xrpl::SHAMap::setLedgerSeq
 deadlock:xrpl::RCLConsensus
 deadlock:xrpl::doLedgerAccept
 
+# TODO(RIPD-XXXX): beast::PropertyStream::Source lock-order-inversion.
+# find_one_deep() acquires parent's recursive_mutex then recursively acquires
+# children's mutexes, while find_one() can acquire them in reverse order.
+# This is a pre-existing issue in beast's PropertyStream tree traversal.
+deadlock:beast::PropertyStream::Source
+
 # Signal/crash suppressions for GCC TSAN instrumentation issues
 signal:std::__cxx11::basic_stringbuf
 signal:basic_stringbuf
