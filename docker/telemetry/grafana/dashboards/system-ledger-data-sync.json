@@ -423,7 +423,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "none",
           "custom": {
             "axisLabel": "Messages In",
             "spanNulls": true,

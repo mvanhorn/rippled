@@ -217,14 +217,16 @@ class OTelGaugeImpl : public GaugeImpl
 {
 public:
     /**
-     * @param name   Fully-qualified metric name (prefix.group.name).
-     * @param meter  OTel Meter used to create the observable gauge.
+     * @param name       Fully-qualified metric name (prefix.group.name).
+     * @param meter      OTel Meter used to create the observable gauge.
+     * @param collector  Owning collector, used to invoke hooks before reads.
      */
     OTelGaugeImpl(
         std::string const& name,
-        opentelemetry::nostd::shared_ptr<metrics_api::Meter> const& meter);
+        opentelemetry::nostd::shared_ptr<metrics_api::Meter> const& meter,
+        std::shared_ptr<OTelCollectorImp> const& collector);
 
-    ~OTelGaugeImpl() override = default;
+    ~OTelGaugeImpl() override;
 
     /**
      * @brief Set the gauge to an absolute value.
@@ -260,6 +262,9 @@ private:
 
     /** OTel observable gauge handle (prevents deregistration). */
     opentelemetry::nostd::shared_ptr<metrics_api::ObservableInstrument> m_gauge;
+
+    /** Owning collector, used to invoke hooks before reading gauge values. */
+    std::shared_ptr<OTelCollectorImp> m_collector;
 };
 
 //------------------------------------------------------------------------------
@@ -485,6 +490,16 @@ private:
 
     /** Registered gauges read during observable callbacks. */
     std::vector<OTelGaugeImpl*> m_gauges;
+
+    /**
+     * @brief Debounce timestamp for callHooks().
+     *
+     * Multiple gauge callbacks fire during the same collection cycle.
+     * This atomic tracks the last time hooks were invoked (ms since epoch).
+     * Hooks are called at most once per 500ms window to avoid redundant
+     * invocations while still ensuring fresh values each collection cycle.
+     */
+    std::atomic<int64_t> m_lastHookCallMs{0};
 };
 
 //==============================================================================
@@ -557,16 +572,21 @@ OTelEventImpl::notify(value_type const& value)
 
 OTelGaugeImpl::OTelGaugeImpl(
     std::string const& name,
-    opentelemetry::nostd::shared_ptr<metrics_api::Meter> const& meter)
-    : m_gauge(meter->CreateInt64ObservableGauge(name))
+    opentelemetry::nostd::shared_ptr<metrics_api::Meter> const& meter,
+    std::shared_ptr<OTelCollectorImp> const& collector)
+    : m_gauge(meter->CreateInt64ObservableGauge(name)), m_collector(collector)
 {
+    m_collector->addGauge(this);
+
     // Register the async callback that the SDK calls during collection.
-    // The callback reads the atomic value and reports it to the observer.
-    // The raw `this` pointer is safe here because RemoveCallback() is
-    // called in the destructor before `this` becomes invalid.
+    // Before reading the gauge value, invoke all registered hooks so that
+    // hook handlers (e.g. NetworkOPs State_Accounting) have a chance to
+    // update gauge values. callHooks() uses a debounce timestamp so hooks
+    // run at most once per collection cycle even with many gauges.
     m_gauge->AddCallback(
         [](opentelemetry::metrics::ObserverResult result, void* state) {
             auto* self = static_cast<OTelGaugeImpl*>(state);
+            self->m_collector->callHooks();
             if (auto intResult = opentelemetry::nostd::get_if<opentelemetry::nostd::shared_ptr<
                     opentelemetry::metrics::ObserverResultT<int64_t>>>(&result))
             {
@@ -574,6 +594,11 @@ OTelGaugeImpl::OTelGaugeImpl(
             }
         },
         this);
+}
+
+OTelGaugeImpl::~OTelGaugeImpl()
+{
+    m_collector->removeGauge(this);
 }
 
 void
@@ -723,7 +748,8 @@ OTelCollectorImp::make_event(std::string const& name)
 Gauge
 OTelCollectorImp::make_gauge(std::string const& name)
 {
-    return Gauge(std::make_shared<OTelGaugeImpl>(formatName(name), m_otelMeter));
+    return Gauge(
+        std::make_shared<OTelGaugeImpl>(formatName(name), m_otelMeter, shared_from_this()));
 }
 
 Meter
@@ -749,6 +775,19 @@ OTelCollectorImp::removeHook(OTelHookImpl* hook)
 void
 OTelCollectorImp::callHooks()
 {
+    // Debounce: hooks run at most once per 500ms. Multiple gauge callbacks
+    // fire during the same collection cycle — only the first one triggers
+    // hooks. Subsequent callbacks within the window read already-updated
+    // gauge values.
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now().time_since_epoch())
+                   .count();
+    auto last = m_lastHookCallMs.load(std::memory_order_relaxed);
+    if (now - last < 500)
+        return;
+    if (!m_lastHookCallMs.compare_exchange_strong(last, now, std::memory_order_relaxed))
+        return;  // Another thread won the race.
+
     std::lock_guard lock(m_mutex);
     for (auto* hook : m_hooks)
         hook->callHandler();
