@@ -56,6 +56,14 @@ deadlock:xrpl::LedgerReplayTask
 race:xrpl::SHAMap::SHAMap
 race:xrpl::SHAMap::setLedgerSeq
 
+# TODO(RIPD-XXXX): RCLConsensus / NetworkOPsImp lock-order-inversion.
+# doLedgerAccept() acquires NetworkOPsImp mutex then RCLConsensus::startRound()
+# acquires consensus mutex (M0→M1), while RCLConsensus::Adaptor::doAccept()
+# acquires them in reverse order via std::lock (M1→M0). The std::lock path is
+# actually safe (deadlock-free), but TSAN flags the inconsistent ordering.
+deadlock:xrpl::RCLConsensus
+deadlock:xrpl::doLedgerAccept
+
 # Signal/crash suppressions for GCC TSAN instrumentation issues
 signal:std::__cxx11::basic_stringbuf
 signal:basic_stringbuf
