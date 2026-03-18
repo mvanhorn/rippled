@@ -10,7 +10,7 @@
   "links": [],
   "panels": [
     {
-      "title": "Job Throughput Rate (per second)",
+      "title": "Job Throughput Rate (Per Second)",
       "description": "Rate of jobs queued, started, and finished across all job types. Computed as rate() over the OTel counter values. High queue rates with low finish rates indicate backlog.",
       "type": "timeseries",
       "gridPos": {
@@ -169,7 +169,7 @@
       }
     },
     {
-      "title": "Job Queue Wait Time (p50, p95, p99)",
+      "title": "Job Queue Wait Time (P50, P95, P99)",
       "description": "Histogram quantiles for time jobs spend waiting in the queue before execution starts. High values indicate thread pool saturation.",
       "type": "timeseries",
       "gridPos": {
@@ -190,21 +190,21 @@
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.50, sum by (le, exported_instance) (rate(rippled_job_queued_duration_us_bucket{exported_instance=~\"$node\", job_type=~\"$job_type\"}[5m])))",
-          "legendFormat": "p50 [{{exported_instance}}]"
+          "legendFormat": "P50 [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.95, sum by (le, exported_instance) (rate(rippled_job_queued_duration_us_bucket{exported_instance=~\"$node\", job_type=~\"$job_type\"}[5m])))",
-          "legendFormat": "p95 [{{exported_instance}}]"
+          "legendFormat": "P95 [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.99, sum by (le, exported_instance) (rate(rippled_job_queued_duration_us_bucket{exported_instance=~\"$node\", job_type=~\"$job_type\"}[5m])))",
-          "legendFormat": "p99 [{{exported_instance}}]"
+          "legendFormat": "P99 [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -228,7 +228,7 @@
       }
     },
     {
-      "title": "Job Execution Time (p50, p95, p99)",
+      "title": "Job Execution Time (P50, P95, P99)",
       "description": "Histogram quantiles for actual job execution time. High values indicate expensive operations or resource contention.",
       "type": "timeseries",
       "gridPos": {
@@ -249,21 +249,21 @@
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.50, sum by (le, exported_instance) (rate(rippled_job_running_duration_us_bucket{exported_instance=~\"$node\", job_type=~\"$job_type\"}[5m])))",
-          "legendFormat": "p50 [{{exported_instance}}]"
+          "legendFormat": "P50 [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.95, sum by (le, exported_instance) (rate(rippled_job_running_duration_us_bucket{exported_instance=~\"$node\", job_type=~\"$job_type\"}[5m])))",
-          "legendFormat": "p95 [{{exported_instance}}]"
+          "legendFormat": "P95 [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.99, sum by (le, exported_instance) (rate(rippled_job_running_duration_us_bucket{exported_instance=~\"$node\", job_type=~\"$job_type\"}[5m])))",
-          "legendFormat": "p99 [{{exported_instance}}]"
+          "legendFormat": "P99 [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -287,7 +287,7 @@
       }
     },
     {
-      "title": "Per-Job-Type Execution Time (p95)",
+      "title": "Per-Job-Type Execution Time (P95)",
       "description": "95th percentile execution time broken down by job type. Identifies the slowest job types.",
       "type": "timeseries",
       "gridPos": {
