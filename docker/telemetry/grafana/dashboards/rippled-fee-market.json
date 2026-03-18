@@ -31,14 +31,14 @@
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_count\"}",
-          "legendFormat": "Queue Depth"
+          "legendFormat": "Queue Depth [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_max_size\"}",
-          "legendFormat": "Max Capacity"
+          "legendFormat": "Max Capacity [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -79,14 +79,14 @@
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_in_ledger\"}",
-          "legendFormat": "In Ledger"
+          "legendFormat": "In Ledger [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_per_ledger\"}",
-          "legendFormat": "Expected Per Ledger"
+          "legendFormat": "Expected Per Ledger [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -127,28 +127,28 @@
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_reference_fee_level\"}",
-          "legendFormat": "Reference Fee Level"
+          "legendFormat": "Reference Fee Level [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_min_processing_fee_level\"}",
-          "legendFormat": "Min Processing Fee Level"
+          "legendFormat": "Min Processing Fee Level [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_med_fee_level\"}",
-          "legendFormat": "Median Fee Level"
+          "legendFormat": "Median Fee Level [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_txq_metrics{exported_instance=~\"$node\", metric=\"txq_open_ledger_fee_level\"}",
-          "legendFormat": "Open Ledger Fee Level"
+          "legendFormat": "Open Ledger Fee Level [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -193,28 +193,28 @@
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor\"}",
-          "legendFormat": "Combined Load Factor"
+          "legendFormat": "Combined Load Factor [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_server\"}",
-          "legendFormat": "Server"
+          "legendFormat": "Server [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_fee_escalation\"}",
-          "legendFormat": "Fee Escalation"
+          "legendFormat": "Fee Escalation [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_fee_queue\"}",
-          "legendFormat": "Fee Queue"
+          "legendFormat": "Fee Queue [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -271,21 +271,21 @@
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_local\"}",
-          "legendFormat": "Local"
+          "legendFormat": "Local [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_net\"}",
-          "legendFormat": "Network"
+          "legendFormat": "Network [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_load_factor_metrics{exported_instance=~\"$node\", metric=\"load_factor_cluster\"}",
-          "legendFormat": "Cluster"
+          "legendFormat": "Cluster [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
