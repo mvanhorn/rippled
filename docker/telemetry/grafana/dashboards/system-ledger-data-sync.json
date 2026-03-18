@@ -31,56 +31,56 @@
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Data Get"
+          "legendFormat": "Ledger Data Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Data Share"
+          "legendFormat": "Ledger Data Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_Transaction_Set_candidate_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Set Candidate Get"
+          "legendFormat": "TX Set Candidate Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_Transaction_Set_candidate_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Set Candidate Share"
+          "legendFormat": "TX Set Candidate Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_Transaction_Node_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Get"
+          "legendFormat": "TX Node Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_Transaction_Node_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Share"
+          "legendFormat": "TX Node Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_Account_State_Node_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Node Get"
+          "legendFormat": "Account State Node Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_data_Account_State_Node_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Node Share"
+          "legendFormat": "Account State Node Share [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -119,56 +119,56 @@
             "type": "prometheus"
           },
           "expr": "rippled_ledger_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Share In"
+          "legendFormat": "Ledger Share In [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Get In"
+          "legendFormat": "Ledger Get In [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_Transaction_Set_candidate_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Set Candidate Share"
+          "legendFormat": "TX Set Candidate Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_Transaction_Set_candidate_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Set Candidate Get"
+          "legendFormat": "TX Set Candidate Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_Transaction_node_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Share"
+          "legendFormat": "TX Node Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_Transaction_node_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Get"
+          "legendFormat": "TX Node Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_Account_State_node_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Share"
+          "legendFormat": "Account State Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_ledger_Account_State_node_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Get"
+          "legendFormat": "Account State Get [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -207,56 +207,56 @@
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Ledger_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Get"
+          "legendFormat": "Ledger Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Ledger_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Share"
+          "legendFormat": "Ledger Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transaction_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Transaction Get"
+          "legendFormat": "Transaction Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transaction_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Transaction Share"
+          "legendFormat": "Transaction Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transaction_node_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Get"
+          "legendFormat": "TX Node Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transaction_node_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Share"
+          "legendFormat": "TX Node Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Account_State_node_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Get"
+          "legendFormat": "Account State Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Account_State_node_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Share"
+          "legendFormat": "Account State Share [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -295,49 +295,49 @@
             "type": "prometheus"
           },
           "expr": "rippled_getobject_CAS_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "CAS Get"
+          "legendFormat": "CAS Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_CAS_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "CAS Share"
+          "legendFormat": "CAS Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Fetch_Pack_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Fetch Pack Share"
+          "legendFormat": "Fetch Pack Share [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Fetch_Pack_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Fetch Pack Get"
+          "legendFormat": "Fetch Pack Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transactions_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Transactions Get"
+          "legendFormat": "Transactions Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_get_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Aggregate Get"
+          "legendFormat": "Aggregate Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_share_Bytes_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Aggregate Share"
+          "legendFormat": "Aggregate Share [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -376,49 +376,49 @@
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Ledger_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Ledger Get"
+          "legendFormat": "Ledger Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transaction_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Transaction Get"
+          "legendFormat": "Transaction Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transaction_node_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "TX Node Get"
+          "legendFormat": "TX Node Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Account_State_node_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Account State Get"
+          "legendFormat": "Account State Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_CAS_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "CAS Get"
+          "legendFormat": "CAS Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Fetch_Pack_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Fetch Pack Get"
+          "legendFormat": "Fetch Pack Get [{{exported_instance}}]"
         },
         {
           "datasource": {
             "type": "prometheus"
           },
           "expr": "rippled_getobject_Transactions_get_Messages_In{exported_instance=~\"$node\"}",
-          "legendFormat": "Transactions Get"
+          "legendFormat": "Transactions Get [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
@@ -464,7 +464,7 @@
             "type": "prometheus"
           },
           "expr": "topk(20, {exported_instance=~\"$node\", __name__=~\"rippled_.*_Bytes_In\", __name__!~\"rippled_total_.*\"})",
-          "legendFormat": "{{__name__}}"
+          "legendFormat": "{{__name__}} [{{exported_instance}}]"
         }
       ],
       "fieldConfig": {
