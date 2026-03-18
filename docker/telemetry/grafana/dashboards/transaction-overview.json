@@ -86,7 +86,7 @@
           "datasource": {
             "type": "prometheus"
           },
-          "expr": "sum by (xrpl_tx_local) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", span_name=\"tx.process\"}[5m]))",
+          "expr": "sum by (xrpl_tx_local) (rate(traces_span_metrics_calls_total{exported_instance=~\"$node\", xrpl_tx_local=~\"$tx_origin\", span_name=\"tx.process\"}[5m]))",
           "legendFormat": "local={{xrpl_tx_local}}"
         }
       ]
