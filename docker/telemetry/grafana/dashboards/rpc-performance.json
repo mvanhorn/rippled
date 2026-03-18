@@ -41,7 +41,7 @@
       }
     },
     {
-      "title": "RPC Latency p95 by Command",
+      "title": "RPC Latency P95 by Command",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -55,7 +55,7 @@
             "type": "prometheus"
           },
           "expr": "histogram_quantile(0.95, sum by (le, xrpl_rpc_command) (rate(traces_span_metrics_duration_milliseconds_bucket{xrpl_rpc_command=~\"$command\", exported_instance=~\"$node\", span_name=~\"rpc.command.*\"}[5m])))",
-          "legendFormat": "p95 {{xrpl_rpc_command}}"
+          "legendFormat": "P95 {{xrpl_rpc_command}}"
         }
       ],
       "fieldConfig": {
