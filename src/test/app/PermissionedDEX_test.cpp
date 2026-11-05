@@ -23,8 +23,10 @@
 
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/beast/unit_test/suite.h>
 #include <xrpl/beast/utility/Journal.h>
+#include <xrpl/core/HashRouter.h>
 #include <xrpl/ledger/OpenView.h>
 #include <xrpl/protocol/Book.h>
 #include <xrpl/protocol/Feature.h>
@@ -37,9 +39,11 @@
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/SeqProxy.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFlags.h>
 #include <xrpl/protocol/jss.h>
+#include <xrpl/server/NetworkOPs.h>
 
 #include <algorithm>
 #include <chrono>
@@ -178,6 +182,80 @@ class PermissionedDEX_test : public beast::unit_test::Suite
     }
 
     void
+    testResubmitAfterAmendment(FeatureBitset features)
+    {
+        testcase << "Resubmit after amendment"
+                 << (features[fixCleanup3_4_0] ? " (Cleanup3_4_0 enabled)"
+                                               : " (Cleanup3_4_0 disabled)");
+
+        Env env(*this, features - featurePermissionedDEX);
+        auto const& [gw, domainOwner, alice, bob, carol, usd, domainID, credType] =
+            PermissionedDEX(env);
+        auto const sequence = env.seq(bob);
+        auto const balance = env.balance(bob);
+        auto const localTxCount = env.app().getOPs().getLocalTxCount();
+
+        auto const jt = env.jt(offer(bob, XRP(10), usd(10)), Domain(domainID));
+        auto const txID = jt.stx->getTransactionID();
+        Serializer s;
+        jt.stx->add(s);
+        json::Value args{json::ValueType::Object};
+        args[jss::tx_blob] = strHex(s.slice());
+        args[jss::fail_hard] = true;
+
+        auto const hybrid = env.jt(offer(bob, XRP(10), usd(10)), Txflags(tfHybrid));
+        auto const hybridID = hybrid.stx->getTransactionID();
+        Serializer hybridSerializer;
+        hybrid.stx->add(hybridSerializer);
+        json::Value hybridArgs{json::ValueType::Object};
+        hybridArgs[jss::tx_blob] = strHex(hybridSerializer.slice());
+        hybridArgs[jss::fail_hard] = true;
+
+        for (int attempt = 0; attempt < 2; ++attempt)
+        {
+            auto const jr = env.rpc("json", "submit", args.toStyledString());
+            BEAST_EXPECT(jr[jss::result][jss::engine_result] == "temDISABLED");
+            BEAST_EXPECT(jr[jss::result][jss::tx_json][jss::hash] == to_string(txID));
+            BEAST_EXPECT(
+                (env.app().getHashRouter().getFlags(txID) & HashRouterFlags::BAD) ==
+                HashRouterFlags::UNDEFINED);
+
+            auto const hybridResult = env.rpc("json", "submit", hybridArgs.toStyledString());
+            BEAST_EXPECT(hybridResult[jss::result][jss::engine_result] == "temINVALID_FLAG");
+            BEAST_EXPECT(
+                (env.app().getHashRouter().getFlags(hybridID) & HashRouterFlags::BAD) ==
+                HashRouterFlags::UNDEFINED);
+            BEAST_EXPECT(env.seq(bob) == sequence);
+            BEAST_EXPECT(env.balance(bob) == balance);
+            BEAST_EXPECT(env.app().getOPs().getLocalTxCount() == localTxCount);
+        }
+
+        env.enableFeature(featurePermissionedDEX);
+        env.close();
+        BEAST_EXPECT(env.current()->rules().enabled(featurePermissionedDEX));
+        BEAST_EXPECT(env.seq(bob) == sequence);
+        BEAST_EXPECT(env.balance(bob) == balance);
+
+        auto const hybridResult = env.rpc("json", "submit", hybridArgs.toStyledString());
+        BEAST_EXPECT(hybridResult[jss::result][jss::engine_result] == "temINVALID_FLAG");
+        BEAST_EXPECT(
+            (env.app().getHashRouter().getFlags(hybridID) & HashRouterFlags::BAD) ==
+            HashRouterFlags::UNDEFINED);
+        BEAST_EXPECT(env.seq(bob) == sequence);
+        BEAST_EXPECT(env.balance(bob) == balance);
+
+        args.removeMember(jss::fail_hard);
+        auto const jr = env.rpc("json", "submit", args.toStyledString());
+        BEAST_EXPECT(jr[jss::result][jss::engine_result] == "tesSUCCESS");
+        BEAST_EXPECT(jr[jss::result][jss::tx_json][jss::hash] == to_string(txID));
+        BEAST_EXPECT(env.seq(bob) == sequence + 1);
+        BEAST_EXPECT(checkOffer(env, bob, sequence, XRP(10), usd(10), 0, true));
+        auto const sle = env.le(keylet::offer(bob.id(), SeqProxy::rawSequence(sequence)));
+        if (BEAST_EXPECT(sle))
+            BEAST_EXPECT((*sle)[sfDomainID] == domainID);
+    }
+
+    void
     testOfferCreate(FeatureBitset features)
     {
         bool const fixEnabled = features[fixCleanup3_4_0];
@@ -210,8 +288,24 @@ class PermissionedDEX_test : public beast::unit_test::Suite
             auto const& [gw, domainOwner, alice, bob, carol, usd, domainID, credType] =
                 PermissionedDEX(env);
 
-            env(offer(bob, XRP(10), usd(10)), Domain(UInt256{}), Ter(temMALFORMED));
-            env.close();
+            auto const sequence = env.seq(bob);
+            auto const balance = env.balance(bob);
+            auto const jt = env.jt(offer(bob, XRP(10), usd(10)), Domain(UInt256{}));
+            Serializer s;
+            jt.stx->add(s);
+            json::Value args{json::ValueType::Object};
+            args[jss::tx_blob] = strHex(s.slice());
+            args[jss::fail_hard] = true;
+            for (int attempt = 0; attempt < 2; ++attempt)
+            {
+                auto const jr = env.rpc("json", "submit", args.toStyledString());
+                BEAST_EXPECT(jr[jss::result][jss::engine_result] == "temMALFORMED");
+                BEAST_EXPECT(env.seq(bob) == sequence);
+                BEAST_EXPECT(env.balance(bob) == balance);
+                BEAST_EXPECT(
+                    (env.app().getHashRouter().getFlags(jt.stx->getTransactionID()) &
+                     HashRouterFlags::BAD) == HashRouterFlags::UNDEFINED);
+            }
         }
 
         // preclaim - someone outside of the domain cannot create domain offer
@@ -2411,6 +2505,9 @@ public:
     run() override
     {
         FeatureBitset const all{jtx::testableAmendments()};
+
+        testResubmitAfterAmendment(all);
+        testResubmitAfterAmendment(all - fixCleanup3_4_0);
 
         // Test domain offer (w/o hybrid)
         testOfferCreate(all);

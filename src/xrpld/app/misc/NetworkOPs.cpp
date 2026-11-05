@@ -1744,13 +1744,9 @@ NetworkOPsImp::apply(std::unique_lock<std::mutex>& batchLock)
                 e.transaction->setApplied();
             }
 
+            // Application results, including tem codes, can depend on Rules.
+            // Do not cache them as BAD; reevaluate them on later submissions.
             e.transaction->setResult(e.result);
-
-            if (isTemMalformed(e.result))
-            {
-                registry_.get().getHashRouter().setFlags(
-                    e.transaction->getID(), HashRouterFlags::BAD);
-            }
 
 #ifdef DEBUG
             if (!isTesSuccess(e.result))
